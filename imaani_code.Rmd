@@ -73,10 +73,6 @@ hospital_data_cleaned = hospital_data %>%
 
 ```
 
-```{r export dataset}
-hospital_data_cleaned %>% write.csv(file = "/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/data/hospital_data_cleaned.csv")
-
-```
 
 
 ```{r exploratory data analysis}
@@ -89,10 +85,10 @@ continuous_predictors_no_transformations = hospital_data_cleaned %>%
   mutate(heartrate_transformed = (1/heartrate^2)) %>%
   select(log_length_of_stay, age, respirationrate, mean_arterial_pressure, o2sat, temperature, heartrate, bmi)
 
-pairs(continuous_predictors_no_transformations, panel = panel.smooth)
-
 continuous_predictors_w_transformations = hospital_data_cleaned %>%
   select(log_length_of_stay, respirationrate_transformed, heartrate_transformed, bmi)
+
+pairs(continuous_predictors_no_transformations, panel = panel.smooth)
 
 pairs(continuous_predictors_w_transformations, panel = panel.smooth)
 
@@ -101,22 +97,18 @@ hospital_data_cleaned %>%
   cor() %>%
   kable()
 
+```
 
-  
+```{r export clean dataset}
+hospital_data_cleaned %>% write.csv(file = "/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/data/hospital_data_cleaned.csv")
 
+hospital_data_cleaned %>% 
+  select(patientid, visitid, log_length_of_stay, is30dayreadmit, mews, cindex, evisit, icu_flag, age, postalcode, gender, race, religion, maritalstatus, facilityname, insurancetype, bmi, o2sat_cat, temperature_cat, heartrate_transformed, respirationrate_transformed, facilityzip, mean_arterial_pressure, date) %>%
+  write.csv(file = "/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/data/cleaned_data_for_analyses.csv")
 
 ```
 
-```{r}
-#additional cleaning based on exploratory analysis
-hospital_data_cleaned = hospital_data_cleaned %>%
-  mutate(
-    o2sat = as.factor(ifelse(o2sat > 95, "normal", "low")),
-    
-    temperature = as.factor(ifelse(temperature >= 36.1 & temperature <= 37.2, 'normal', ifelse(temperature < 36.1, 'low', 'high')))
-  )
-    
-```
+
 
 
 

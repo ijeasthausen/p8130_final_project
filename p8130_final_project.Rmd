@@ -70,6 +70,8 @@ continuous_predictors_w_transformations = hospital_data_cleaned %>%
 ```{r echo=FALSE, message=FALSE}
 grid.arrange(grobs = list(hist_outcome_not_transformed, hist_outcome_transformed), ncol = 2, nrow = 1)
 
+#pairs(continuous_predictors_no_transformations, panel = panel.smooth)
+
 pairs(continuous_predictors_w_transformations, panel = panel.smooth)
 
 hospital_data_cleaned %>%
