@@ -14,7 +14,7 @@ if (!require("kableExtra")) install.packages("kableExtra")
 data_bwd = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
   select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
-str(data_bwd)
+# str(data_bwd)
 ```
 
 ## Backward Elimination: "By-hand" 
@@ -97,4 +97,25 @@ step_pvalue %>%
 
 # summary of model from backward elimination
 bwd_step8 %>% summary() 
+
+#???lalalal
+library(leaps)
+data_cp = data_bwd %>% select(log_length_of_stay, 
+                    is30dayreadmit, 
+                    evisit,
+                    age,
+                    gender,
+                    maritalstatus,
+                    insurancetype,
+                    heartrate_transformed, 
+                    respirationrate_transformed,
+                    mean_arterial_pressure) %>% 
+  distinct()
+leaps(x = data_cp[,-1],
+      y = data_cp$log_length_of_stay,
+      method = "Cp") %>%
+Cpplot()
+
+library(leaps)
+leaps(x = data_bwd[,-1], y = data_bwd[,1], nbest=2, method="Cp")
 ```
