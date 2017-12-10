@@ -1,0 +1,36 @@
+---
+title: "Forward Elimination"
+author: "Huijuan Zhang"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#library(knitr)
+library(tidyverse)
+library(broom)
+#library(janitor)
+#library(readxl)
+#library(stringr)
+#library(readr)
+#library(gridExtra)
+cleaned_data_for_analyses = read_csv("./data/cleaned_data_for_analyses.csv") %>% 
+  select(-X1, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+
+str(cleaned_data_for_analyses)
+```
+
+```{r}
+# include mews
+fwd_model = lm(log_length_of_stay ~ ., data = cleaned_data_for_analyses)
+ols_step_forward(fwd_model, penter = 0.05)
+
+# exclude mews
+cleaned_data_for_analyses_nomews = cleaned_data_for_analyses %>% 
+  select(-mews)
+fwd_model_nomews = lm(log_length_of_stay ~ ., data = cleaned_data_for_analyses_nomews)
+ols_step_forward(fwd_model_nomews, penter = 0.05)
+
+# the two models above are the same.
+```
