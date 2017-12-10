@@ -1,0 +1,159 @@
+---
+title: "imaani_code"
+author: "Imaani Easthausen"
+date: "December 9, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(tidyverse)
+library(janitor)
+library(readxl)
+library(stringr)
+```
+
+```{r}
+hospital_data = read_excel("data/GHProject_Dataset.xlsx")
+```
+
+```{r clean data}  
+hospital_data_cleaned = hospital_data %>%
+  clean_names() %>%
+  rename(age = ageyear) %>%
+  
+  #remove all NAs from important variables
+  filter(!is.na(patientid), !is.na(visitid), !is.na(date), !is.na(losdays2), !is.na(is30dayreadmit), !is.na(mews), !is.na(cindex), !is.na(evisit), !is.na(icu_flag), !is.na(age), !is.na(gender), !is.na(religion), !is.na(maritalstatus), !is.na(race), !is.na(respirationrate), !is.na(bpdiastolic), !is.na(heartrate), !is.na(temperature), !is.na(bpsystolic), !is.na(bmi), !is.na(o2sat)) %>%
+  
+  #re-classify variables and define factors
+  mutate(
+    mews = as.factor(ifelse(mews >= 6, 'immediate action', plyr::revalue(as.character(mews), c('0' = "normal", '1' = "normal", '2' = 'increase caution', '3' = 'increase caution', '4' = 'further deterioration', '5' = 'further deterioration')))),
+  
+    cindex = as.factor(ifelse(cindex >= 5, 'severe', plyr::revalue(as.character(cindex), c('0' = "normal", '1' = "mild", '2' = 'mild', '3' = 'moderate', '4' = 'moderate')))),
+    
+    religion = as.factor(plyr::revalue(religion, c('Angelican' = "Christian", 'Hebrew' = "Jewish", 'Non Denominational' = 'Other', 'Catholic' = 'Christian', 'Mormon' = 'Other'))),
+    
+    maritalstatus = as.factor(plyr::revalue(maritalstatus, c('Civil Union' = "Married", 'Divorced' = "Not Married", 'Separated' = 'Not Married', 'Single' = 'Not Maried', 'Widowed' = 'Not Married'))),
+    
+    is30dayreadmit = as.factor(is30dayreadmit),
+    
+    icu_flag = as.factor(icu_flag), gender = as.factor(gender), race = as.factor(race), facilityname = as.factor(facilityname), insurancetype = as.factor(insurancetype),
+    
+    mean_arterial_pressure = bpdiastolic + (1/3)*(bpsystolic + bpdiastolic),
+    
+    o2sat_cat = as.factor(ifelse(o2sat > 95, "normal", "low")),
+    
+    temperature_cat = as.factor(ifelse(temperature >= 36.1 & temperature <= 37.2, 'normal', ifelse(temperature < 36.1, 'low', 'high'))),
+    
+    respirationrate_transformed = 1/(respirationrate^2), 
+  
+    heartrate_transformed = 1/(heartrate^2)
+    
+    ) %>% 
+  
+  #transform outcome variable
+  mutate(log_length_of_stay = log(losdays2)) %>%
+
+  
+  #re-format date variable
+  separate(col = admitdtm, into = c("dayofweek", "month_day", "year"), sep = ",") %>%
+  mutate(month_day = trimws(month_day), year = trimws(year)) %>%
+  separate(col = month_day, into = c("month", "day"), sep = " ") %>%
+  mutate(month = plyr::revalue(month, c("January" = '01', "February" = '02', "March" = '03', "April" = '04', "May" = '05', "June" = '06', "July" = '07', "August" = '08', "September" = '09', "October" = '10', "November" = '11', "December" = '12'))) %>%
+  mutate(date = str_c(year, month, day, sep = "-")) %>%
+  mutate(date = as.Date(date)) %>%
+    select(-c(dayofweek, month, day, year, bpsystolic, bpdiastolic)) %>%
+
+  
+  #remove subsequent visits for patients with re-admits
+  arrange(date) %>%
+  filter(!duplicated(patientid)) 
+
+
+```
+
+```{r export dataset}
+hospital_data_cleaned %>% write.csv(file = "/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/data/hospital_data_cleaned.csv")
+
+```
+
+
+```{r exploratory data analysis}
+hospital_data_cleaned %>%
+  ggplot(aes(x = log_length_of_stay)) +
+  geom_histogram()
+
+continuous_predictors_no_transformations = hospital_data_cleaned %>%
+  mutate(log_respirationrate = (1/(respirationrate^2))) %>%
+  mutate(heartrate_transformed = (1/heartrate^2)) %>%
+  select(log_length_of_stay, age, respirationrate, mean_arterial_pressure, o2sat, temperature, heartrate, bmi)
+
+pairs(continuous_predictors_no_transformations, panel = panel.smooth)
+
+continuous_predictors_w_transformations = hospital_data_cleaned %>%
+  select(log_length_of_stay, respirationrate_transformed, heartrate_transformed, bmi)
+
+pairs(continuous_predictors_w_transformations, panel = panel.smooth)
+
+hospital_data_cleaned %>%
+  select(age, respirationrate_transformed, mean_arterial_pressure, heartrate_transformed, bmi) %>%
+  cor() %>%
+  kable()
+
+
+  
+
+
+```
+
+```{r}
+#additional cleaning based on exploratory analysis
+hospital_data_cleaned = hospital_data_cleaned %>%
+  mutate(
+    o2sat = as.factor(ifelse(o2sat > 95, "normal", "low")),
+    
+    temperature = as.factor(ifelse(temperature >= 36.1 & temperature <= 37.2, 'normal', ifelse(temperature < 36.1, 'low', 'high')))
+  )
+    
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

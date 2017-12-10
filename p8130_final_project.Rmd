@@ -1,0 +1,79 @@
+---
+title: "p8130 Final Project"
+author: "Imaani Easthausen, Shanshan Song, Huijuan Zhang, Xinyan Zheng"
+date: "December 9, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(tidyverse)
+library(janitor)
+library(readxl)
+library(stringr)
+library(readr)
+library(gridExtra)
+hospital_data_cleaned = read_csv("data/hospital_data_cleaned.csv")
+```
+
+
+
+#Methods
+##Data Cleaning
+Data cleaning was conducted in R. For subject with more than one hospitalization, only the first hospitalization was included in analyses. Subjects that were missing any of the following data were excluded: patient ID, visit ID, length of stay, hospital admission witin the last 30 days, MEW score, C index, number of admissions in 6 months prior, age, gender, race, religion, marital status, insurance type.
+
+Due to the high degree of anticipated collinearity between systolic and diastolic blood pressure, mean arterial pressure was calculated from these two variables and used in all subsequent model fitting analyses.  
+
+The below categorical and ordinal variables were reclassified in order to combine levels that provided no new information or that had too few observations for meaninful analysis:
+ 
+ * MEW score: Levels 0 and 1 were reclassified as "normal", levels 2 and 3 were reclassified as "increase caution", levels 4 and 5 were reclassified as "further deterioration", levels 6 and above were re-classified as immediate action.
+ * C index: Level 0 reclassified as "normal", levels 1 and 2 were reclassified as "mild", levels 3 and 4 were reclassified as "moderate", levels 5 and above were reclassified as "severe."
+ * Religion: "Angelican" was reclassified as "Christian," "Hebrew" was reclassified as "Jewish", "Non-Denominational" was reclassified as "Other," "Catholic" was reclassified as "Christian", "Mormon" was reclassified as "Other."
+ * Marital Status: "Civil Union" was reclassified as "married," all other categories were reclassified as "not married."
+
+##Preliminary Analyses
+
+A histogram of LOS (length of stay) was inspected and skewness was observed, and log transformation rendered LOS approximatley normal (figure XXX). Bivariate relationships between continuous predictors and length of stay were examined by inspecting scatter plots. Oxygen saturation, temperature, heart rate, and respiration rate appeared to have non-linear relationships with LOS (figure XXX). As such, respiration rate and heart rate were transformed using the below transformation equation:
+$$t = \frac{1}{x^2}$$
+
+Oxygen saturation and temperature were re-classified into categorical variables as below: 
+
+* Oxygen saturation: saturations below 95% were defined as "low" and saturations from 95-100% were defined as "normal."
+
+* Temperature: Body temperatures bewteen 36.1 and 37.2 degrees were defined as "normal." Temperatures below 36.1 degrees were defined as "low," and temperatures above 37.2 degrees were defined as "high".
+
+All pairs of continuous predictors were examined for collinearity by calculating all pairwise correlations. There did not appear to be substantial collinearity between any predictors (table XXX). 
+
+```{r exploratory data analysis, include = FALSE}
+hist_outcome_not_transformed = hospital_data_cleaned %>%
+  ggplot(aes(x = losdays2)) +
+  geom_histogram() +
+  labs(title = "LOS without Transformation", xlab = "Length of Stay (days)")
+
+hist_outcome_transformed = hospital_data_cleaned %>%
+  ggplot(aes(x = log_length_of_stay)) +
+  geom_histogram() +
+  labs(title = "LOS with Log Transformation", xlab = "Log Length of Stay (days)")
+
+
+continuous_predictors_no_transformations = hospital_data_cleaned %>%
+  mutate(log_respirationrate = (1/(respirationrate^2))) %>%
+  mutate(heartrate_transformed = (1/heartrate^2)) %>%
+  select(log_length_of_stay, age, respirationrate, mean_arterial_pressure, o2sat, temperature, heartrate, bmi)
+
+continuous_predictors_w_transformations = hospital_data_cleaned %>%
+  select(log_length_of_stay, respirationrate_transformed, heartrate_transformed, bmi)
+```
+
+
+```{r echo=FALSE, message=FALSE}
+grid.arrange(grobs = list(hist_outcome_not_transformed, hist_outcome_transformed), ncol = 2, nrow = 1)
+
+pairs(continuous_predictors_w_transformations, panel = panel.smooth)
+
+hospital_data_cleaned %>%
+  select(age, respirationrate_transformed, mean_arterial_pressure, heartrate_transformed, bmi) %>%
+  cor() %>%
+  kable()
+```
