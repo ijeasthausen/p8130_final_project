@@ -34,7 +34,7 @@ The below categorical and ordinal variables were reclassified in order to combin
 
 ##Preliminary Analyses
 
-A histogram of LOS (length of stay) was visually inspected and skewness was observed. Log transformation successfully rendered LOS approximatley normal (figure XXX). Bivariate relationships between continuous predictors and length of stay were examined by inspecting scatter plots. Oxygen saturation, temperature, heart rate, and respiration rate appeared to have non-linear relationships with LOS (figure XXX). As such, respiration rate and heart rate were transformed using the below transformation equation:
+A histogram of LOS was visually inspected and substantial skewness was observed. Log transformation successfully rendered LOS approximatley normal (figure XXX). Bivariate relationships between continuous predictors and length of stay were examined by visual inspection of scatter plots. Oxygen saturation, temperature, heart rate, and respiration rate appeared to have non-linear relationships with LOS. As such, respiration rate and heart rate were transformed using the below transformation equation:
 $$t = \frac{1}{x^2}$$
 Oxygen saturation and temperature were re-classified into categorical variables as below: 
 
@@ -42,7 +42,7 @@ Oxygen saturation and temperature were re-classified into categorical variables 
 
 * Temperature: Body temperatures bewteen 36.1 and 37.2 degrees were defined as "normal." Temperatures below 36.1 degrees were defined as "low," and temperatures above 37.2 degrees were defined as "high".
 
-After these adjustments were made, all categorical variables appeared to have linear relationships with LOS by visual inspection of bivariate scatter plots (figure XXX). 
+After these adjustments were made, all continuous variables appeared to have approximately linear relationships with LOS by visual inspection of bivariate scatter plots (figure XXX). 
 
 All pairs of continuous predictors were examined for collinearity by calculating all pairwise correlations. There did not appear to be substantial collinearity between any predictors (table XXX). 
 
