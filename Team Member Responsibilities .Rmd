@@ -14,6 +14,6 @@ Imaani: -finish data cleaning -make plots, histograms, and summary statistics -t
 
 Xinyan -variable selection with only variables provided in assignemtn
 
-Huiguan -forward variable selection with all variables in dataset
+Huijuan -forward variable selection with all variables in dataset
 
 Song -backward variable selection with all variables in dataset
