@@ -21,7 +21,7 @@ hospital_data_cleaned = read_csv("data/hospital_data_cleaned.csv")
 
 #Methods
 ##Data Cleaning
-Data cleaning was conducted in R. For subject with more than one hospitalization, only the first hospitalization was included in analyses. Subjects that were missing any of the following data were excluded: patient ID, visit ID, length of stay, hospital admission witin the last 30 days, MEW score, C index, number of admissions in 6 months prior, age, gender, race, religion, marital status, insurance type.
+Data cleaning was conducted in R. For subjecta with more than one hospitalization, only the first hospitalization was included in analyses. Subjects that were missing any of the following data were excluded: patient ID, visit ID, length of stay, hospital admission witin the last 30 days, MEW score, C index, number of admissions in 6 months prior, age, gender, race, religion, marital status, insurance type.
 
 Due to the high degree of anticipated collinearity between systolic and diastolic blood pressure, mean arterial pressure was calculated from these two variables and used in all subsequent model fitting analyses.  
 
@@ -34,14 +34,15 @@ The below categorical and ordinal variables were reclassified in order to combin
 
 ##Preliminary Analyses
 
-A histogram of LOS (length of stay) was inspected and skewness was observed, and log transformation rendered LOS approximatley normal (figure XXX). Bivariate relationships between continuous predictors and length of stay were examined by inspecting scatter plots. Oxygen saturation, temperature, heart rate, and respiration rate appeared to have non-linear relationships with LOS (figure XXX). As such, respiration rate and heart rate were transformed using the below transformation equation:
+A histogram of LOS (length of stay) was visually inspected and skewness was observed. Log transformation successfully rendered LOS approximatley normal (figure XXX). Bivariate relationships between continuous predictors and length of stay were examined by inspecting scatter plots. Oxygen saturation, temperature, heart rate, and respiration rate appeared to have non-linear relationships with LOS (figure XXX). As such, respiration rate and heart rate were transformed using the below transformation equation:
 $$t = \frac{1}{x^2}$$
-
 Oxygen saturation and temperature were re-classified into categorical variables as below: 
 
 * Oxygen saturation: saturations below 95% were defined as "low" and saturations from 95-100% were defined as "normal."
 
 * Temperature: Body temperatures bewteen 36.1 and 37.2 degrees were defined as "normal." Temperatures below 36.1 degrees were defined as "low," and temperatures above 37.2 degrees were defined as "high".
+
+After these adjustments were made, all categorical variables appeared to have linear relationships with LOS by visual inspection of bivariate scatter plots (figure XXX). 
 
 All pairs of continuous predictors were examined for collinearity by calculating all pairwise correlations. There did not appear to be substantial collinearity between any predictors (table XXX). 
 
@@ -49,12 +50,12 @@ All pairs of continuous predictors were examined for collinearity by calculating
 hist_outcome_not_transformed = hospital_data_cleaned %>%
   ggplot(aes(x = losdays2)) +
   geom_histogram() +
-  labs(title = "LOS without Transformation", xlab = "Length of Stay (days)")
+  labs(title = "LOS without Transformation", x = "Length of Stay (days)")
 
 hist_outcome_transformed = hospital_data_cleaned %>%
   ggplot(aes(x = log_length_of_stay)) +
   geom_histogram() +
-  labs(title = "LOS with Log Transformation", xlab = "Log Length of Stay (days)")
+  labs(title = "LOS with Log Transformation", x = "Length of Stay (log(days))")
 
 
 continuous_predictors_no_transformations = hospital_data_cleaned %>%
@@ -68,11 +69,10 @@ continuous_predictors_w_transformations = hospital_data_cleaned %>%
 
 
 ```{r echo=FALSE, message=FALSE}
-grid.arrange(grobs = list(hist_outcome_not_transformed, hist_outcome_transformed), ncol = 2, nrow = 1)
 
-#pairs(continuous_predictors_no_transformations, panel = panel.smooth)
+hist_outcome_transformed
 
-pairs(continuous_predictors_w_transformations, panel = panel.smooth)
+p1 = pairs(continuous_predictors_w_transformations, panel = panel.smooth)
 
 hospital_data_cleaned %>%
   select(age, respirationrate_transformed, mean_arterial_pressure, heartrate_transformed, bmi) %>%
