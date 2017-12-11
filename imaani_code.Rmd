@@ -15,13 +15,13 @@ library(stringr)
 ```
 
 ```{r}
-hospital_data = read_excel("data/GHProject_Dataset.xlsx")
+hospital_data = read_excel("./data/GHProject_Dataset.xlsx")
 ```
 
 ```{r clean data}  
 hospital_data_cleaned = hospital_data %>%
   clean_names() %>%
-  rename(age = ageyear) %>%
+  dplyr::rename(age = ageyear) %>% 
   
   #remove all NAs from important variables
   filter(!is.na(patientid), !is.na(visitid), !is.na(date), !is.na(losdays2), !is.na(is30dayreadmit), !is.na(mews), !is.na(cindex), !is.na(evisit), !is.na(icu_flag), !is.na(age), !is.na(gender), !is.na(religion), !is.na(maritalstatus), !is.na(race), !is.na(respirationrate), !is.na(bpdiastolic), !is.na(heartrate), !is.na(temperature), !is.na(bpsystolic), !is.na(bmi), !is.na(o2sat)) %>%
@@ -34,7 +34,7 @@ hospital_data_cleaned = hospital_data %>%
     
     religion = as.factor(plyr::revalue(religion, c('Angelican' = "Christian", 'Hebrew' = "Jewish", 'Non Denominational' = 'Other', 'Catholic' = 'Christian', 'Mormon' = 'Other'))),
     
-    maritalstatus = as.factor(plyr::revalue(maritalstatus, c('Civil Union' = "Married", 'Divorced' = "Not Married", 'Separated' = 'Not Married', 'Single' = 'Not Maried', 'Widowed' = 'Not Married'))),
+    maritalstatus = as.factor(plyr::revalue(maritalstatus, c('Civil Union' = "Married", 'Divorced' = "Not Married", 'Separated' = 'Not Married', 'Single' = 'Not Married', 'Widowed' = 'Not Married'))),
     
     is30dayreadmit = as.factor(is30dayreadmit),
     
@@ -100,11 +100,11 @@ hospital_data_cleaned %>%
 ```
 
 ```{r export clean dataset}
-hospital_data_cleaned %>% write.csv(file = "/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/data/hospital_data_cleaned.csv")
+hospital_data_cleaned %>% write.csv(file = "./data/hospital_data_cleaned.csv")
 
 hospital_data_cleaned %>% 
   select(patientid, visitid, log_length_of_stay, is30dayreadmit, mews, cindex, evisit, icu_flag, age, postalcode, gender, race, religion, maritalstatus, facilityname, insurancetype, bmi, o2sat_cat, temperature_cat, heartrate_transformed, respirationrate_transformed, facilityzip, mean_arterial_pressure, date) %>%
-  write.csv(file = "/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/data/cleaned_data_for_analyses.csv")
+  write.csv(file = "./data/cleaned_data_for_analyses.csv")
 
 ```
 

@@ -1,0 +1,100 @@
+---
+title: "Backward Elimination"
+author: "Shan-Shan Song, ss5422@columbia.edu"
+date: "12/10/2017"
+output: pdf_document
+---
+
+```{r bwd_import, message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(broom)
+library(plyr)
+if (!require("kableExtra")) install.packages("kableExtra")
+
+data_bwd = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+# str(data_bwd)
+```
+
+## Backward Elimination: "By-hand" 
+
+### Procedures
+
+- start with all predictors in the model
+
+```{r bwd_full, message=FALSE, warning=FALSE, results = "hide"}
+# fit
+bwd_fit_full = lm(log_length_of_stay ~ ., data = data_bwd)
+arrange(tidy(bwd_fit_full), desc(p.value))
+```
+
+- remove the predictor with highest p-value
+- refit the model and move on
+- stop when all p-values <= **alpha_crit (p-to-remove) = 0.05**.
+
+```{r bwd_back, message=FALSE, warning=FALSE, results = "hide"}
+# step 1: no race
+bwd_step1 = update(bwd_fit_full, . ~ . -race)
+arrange(tidy(bwd_step1), desc(p.value))
+step1_pvalue = tidy(bwd_step1) %>% select(term, p.value)
+
+# step 2: no cindex
+bwd_step2 = update(bwd_step1, . ~ . -cindex)
+arrange(tidy(bwd_step2), desc(p.value))
+step2_pvalue = tidy(bwd_step2) %>% select(term, p.value)
+
+# step 3: no mews
+bwd_step3 = update(bwd_step2, . ~ . -mews)
+arrange(tidy(bwd_step3), desc(p.value))
+step3_pvalue = tidy(bwd_step3) %>% select(term, p.value)
+
+# step 4: no religion
+bwd_step4 = update(bwd_step3, . ~ . -religion)
+arrange(tidy(bwd_step4), desc(p.value))
+step4_pvalue = tidy(bwd_step4) %>% select(term, p.value)
+
+# step 5: no o2sat_cat
+bwd_step5 = update(bwd_step4, . ~ . -o2sat_cat)
+arrange(tidy(bwd_step5), desc(p.value))
+step5_pvalue = tidy(bwd_step5) %>% select(term, p.value)
+
+# step 6: no icu_flag
+bwd_step6 = update(bwd_step5, . ~ . -icu_flag)
+arrange(tidy(bwd_step6), desc(p.value))
+step6_pvalue = tidy(bwd_step6) %>% select(term, p.value)
+
+# step 7: no temperature_cat
+bwd_step7 = update(bwd_step6, . ~ . -temperature_cat)
+arrange(tidy(bwd_step7), desc(p.value))
+step7_pvalue = tidy(bwd_step7) %>% select(term, p.value)
+
+# step 8: no bmi
+bwd_step8 = update(bwd_step7, . ~ . -bmi)
+arrange(tidy(bwd_step8), desc(p.value))
+step8_pvalue = tidy(bwd_step8) %>% select(term, p.value)
+
+# combine pvalues each step into a table
+for (i in 1:8){
+  if (i == 1){
+    step_pvalue = step1_pvalue %>% rename(c("p.value" = "pvalue_step1"))
+    next}
+  loop_name = paste0("step",i,"_pvalue",sep = "")
+  step_pvalue = merge(step_pvalue, eval(parse(text = loop_name)), all = TRUE, by = "term") %>% 
+    rename(c("p.value" = paste0("pvalue_step",i)))
+}
+```
+
+### Results
+
+```{r bwd_results, message=FALSE, warning=FALSE}
+# backward p-values
+step_pvalue %>% 
+  knitr::kable(format = "latex", 
+               caption = "P-values of Backward Elimination",
+               booktabs = TRUE) %>% 
+  kableExtra::kable_styling(latex_options = "scale_down")
+
+# summary of model from backward elimination
+bwd_step8 %>% summary() 
+```

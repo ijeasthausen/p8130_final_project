@@ -1,0 +1,417 @@
+---
+title: "Forward Elimination"
+author: "Huijuan Zhang"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(olsrr)
+library(broom)
+library(leaps)
+
+cleaned_data_for_analyses = read_csv("./data/cleaned_data_for_analyses.csv") %>% 
+  select(-X1, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+```
+
+Since __the Modified Early Warning Score__ (`MEWS`) determines the degree of illness of a patient based on respiratory rate, oxygen saturation, temperature, blood pressure, heart rate, AVPU response, then there will probably be multicollinearity between `MEWS` and the variables in __Vital Signs__. So we compare the two procedures that include `MEWS` and exclude `MEWS`.
+
+### Forward Stepwise Regression (p-value: 0.05)
+
+```{r olsrr,message=FALSE}
+# include mews
+fwd_model = lm(log_length_of_stay ~ ., data = cleaned_data_for_analyses)
+ols_step_forward(fwd_model, penter = 0.05)
+
+# exclude mews
+cleaned_data_for_analyses_nomews = cleaned_data_for_analyses %>% 
+  select(-mews)
+fwd_model_nomews = lm(log_length_of_stay ~ ., data = cleaned_data_for_analyses_nomews)
+ols_step_forward(fwd_model_nomews, penter = 0.05)
+```
+
+The two models above are the same. The final model we get from Forward Stepwise Regression is __log_length_of_stay ~ age + evisit + respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + is30dayreadmit1 + insurancetype + gender + maritalstatus__.
+
+### Forward Elimination (p-value: 0.05)
+
+```{r byhand,include=FALSE}
+# exclude mews
+
+###########################################################
+
+# Step 1:  Fit simple linear regressions for all variables,look for the variable with lowest p-value
+fwd_fit1 = lm(log_length_of_stay ~ is30dayreadmit, data = cleaned_data_for_analyses)
+fwd_fit2 = lm(log_length_of_stay ~ cindex, data = cleaned_data_for_analyses)
+fwd_fit3 = lm(log_length_of_stay ~ evisit, data = cleaned_data_for_analyses)
+fwd_fit4 = lm(log_length_of_stay ~ icu_flag, data = cleaned_data_for_analyses)
+fwd_fit5 = lm(log_length_of_stay ~ age, data = cleaned_data_for_analyses)
+fwd_fit6 = lm(log_length_of_stay ~ gender, data = cleaned_data_for_analyses)
+fwd_fit7 = lm(log_length_of_stay ~ race, data = cleaned_data_for_analyses)
+fwd_fit8 = lm(log_length_of_stay ~ religion, data = cleaned_data_for_analyses)
+fwd_fit9 = lm(log_length_of_stay ~ maritalstatus, data = cleaned_data_for_analyses)
+fwd_fit10 = lm(log_length_of_stay ~ insurancetype, data = cleaned_data_for_analyses)
+fwd_fit11 = lm(log_length_of_stay ~ bmi, data = cleaned_data_for_analyses)
+fwd_fit12 = lm(log_length_of_stay ~ o2sat_cat, data = cleaned_data_for_analyses)
+fwd_fit13 = lm(log_length_of_stay ~ temperature_cat, data = cleaned_data_for_analyses)
+fwd_fit14 = lm(log_length_of_stay ~ heartrate_transformed, data = cleaned_data_for_analyses)
+fwd_fit15 = lm(log_length_of_stay ~ respirationrate_transformed, data = cleaned_data_for_analyses)
+fwd_fit16 = lm(log_length_of_stay ~ mean_arterial_pressure, data = cleaned_data_for_analyses)
+
+# Extract p-values from results
+fwd_all1 = rbind(min(tidy(fwd_fit1)$p.value[-1]), min(tidy(fwd_fit2)$p.value[-1]),
+                 min(tidy(fwd_fit3)$p.value[-1]), min(tidy(fwd_fit4)$p.value[-1]),
+                 min(tidy(fwd_fit5)$p.value[-1]), min(tidy(fwd_fit6)$p.value[-1]),
+                 min(tidy(fwd_fit7)$p.value[-1]), min(tidy(fwd_fit8)$p.value[-1]),
+                 min(tidy(fwd_fit9)$p.value[-1]), min(tidy(fwd_fit10)$p.value[-1]),
+                 min(tidy(fwd_fit11)$p.value[-1]), min(tidy(fwd_fit12)$p.value[-1]),
+                 min(tidy(fwd_fit13)$p.value[-1]), min(tidy(fwd_fit14)$p.value[-1]),
+                 min(tidy(fwd_fit15)$p.value[-1]), min(tidy(fwd_fit16)$p.value[-1])) %>% 
+  as.data.frame()
+
+colnames(fwd_all1) = "p_value"
+
+# Rank p-values
+fwd_all1 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: age
+forward1 = lm(log_length_of_stay ~ age, data = cleaned_data_for_analyses)
+
+###########################################################
+
+# Step 2: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward1, . ~ . + is30dayreadmit)
+fwd_fit2 = update(forward1, . ~ . + cindex)
+fwd_fit3 = update(forward1, . ~ . + evisit)
+fwd_fit4 = update(forward1, . ~ . + icu_flag)
+fwd_fit5 = update(forward1, . ~ . + gender)
+fwd_fit6 = update(forward1, . ~ . + race)
+fwd_fit7 = update(forward1, . ~ . + religion)
+fwd_fit8 = update(forward1, . ~ . + maritalstatus)
+fwd_fit9 = update(forward1, . ~ . + insurancetype)
+fwd_fit10 = update(forward1, . ~ . + bmi)
+fwd_fit11 = update(forward1, . ~ . + o2sat_cat)
+fwd_fit12 = update(forward1, . ~ . + temperature_cat)
+fwd_fit13 = update(forward1, . ~ . + heartrate_transformed)
+fwd_fit14 = update(forward1, . ~ . + respirationrate_transformed)
+fwd_fit15 = update(forward1, . ~ . + mean_arterial_pressure)
+
+# Extract p-values from results
+fwd_all2 = rbind(min(tidy(fwd_fit1)$p.value[-1:-2]), min(tidy(fwd_fit2)$p.value[-1:-2]),
+                 min(tidy(fwd_fit3)$p.value[-1:-2]), min(tidy(fwd_fit4)$p.value[-1:-2]),
+                 min(tidy(fwd_fit5)$p.value[-1:-2]), min(tidy(fwd_fit6)$p.value[-1:-2]),
+                 min(tidy(fwd_fit7)$p.value[-1:-2]), min(tidy(fwd_fit8)$p.value[-1:-2]),
+                 min(tidy(fwd_fit9)$p.value[-1:-2]), min(tidy(fwd_fit10)$p.value[-1:-2]),
+                 min(tidy(fwd_fit11)$p.value[-1:-2]), min(tidy(fwd_fit12)$p.value[-1:-2]),
+                 min(tidy(fwd_fit13)$p.value[-1:-2]), min(tidy(fwd_fit14)$p.value[-1:-2]),
+                 min(tidy(fwd_fit15)$p.value[-1:-2])) %>% 
+  as.data.frame()
+
+colnames(fwd_all2) = "p_value"
+
+# Rank p-values
+fwd_all2 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: evisit
+forward2 = update(forward1, . ~ . + evisit)
+
+###########################################################
+
+# Step 3: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward2, . ~ . + is30dayreadmit)
+fwd_fit2 = update(forward2, . ~ . + cindex)
+fwd_fit3 = update(forward2, . ~ . + icu_flag)
+fwd_fit4 = update(forward2, . ~ . + gender)
+fwd_fit5 = update(forward2, . ~ . + race)
+fwd_fit6 = update(forward2, . ~ . + religion)
+fwd_fit7 = update(forward2, . ~ . + maritalstatus)
+fwd_fit8 = update(forward2, . ~ . + insurancetype)
+fwd_fit9 = update(forward2, . ~ . + bmi)
+fwd_fit10 = update(forward2, . ~ . + o2sat_cat)
+fwd_fit11 = update(forward2, . ~ . + temperature_cat)
+fwd_fit12 = update(forward2, . ~ . + heartrate_transformed)
+fwd_fit13 = update(forward2, . ~ . + respirationrate_transformed)
+fwd_fit14 = update(forward2, . ~ . + mean_arterial_pressure)
+
+# Extract p-values from results
+fwd_all3 = rbind(min(tidy(fwd_fit1)$p.value[-1:-3]), min(tidy(fwd_fit2)$p.value[-1:-3]),
+                 min(tidy(fwd_fit3)$p.value[-1:-3]), min(tidy(fwd_fit4)$p.value[-1:-3]),
+                 min(tidy(fwd_fit5)$p.value[-1:-3]), min(tidy(fwd_fit6)$p.value[-1:-3]),
+                 min(tidy(fwd_fit7)$p.value[-1:-3]), min(tidy(fwd_fit8)$p.value[-1:-3]),
+                 min(tidy(fwd_fit9)$p.value[-1:-3]), min(tidy(fwd_fit10)$p.value[-1:-3]),
+                 min(tidy(fwd_fit11)$p.value[-1:-3]), min(tidy(fwd_fit12)$p.value[-1:-3]),
+                 min(tidy(fwd_fit13)$p.value[-1:-3]), min(tidy(fwd_fit14)$p.value[-1:-3])) %>% 
+  as.data.frame()
+
+colnames(fwd_all3) = "p_value"
+
+# Rank p-values
+fwd_all3 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: respirationrate_transformed
+forward3 = update(forward2, . ~ . + respirationrate_transformed)
+
+###########################################################
+
+# Step 4: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward3, . ~ . + is30dayreadmit)
+fwd_fit2 = update(forward3, . ~ . + cindex)
+fwd_fit3 = update(forward3, . ~ . + icu_flag)
+fwd_fit4 = update(forward3, . ~ . + gender)
+fwd_fit5 = update(forward3, . ~ . + race)
+fwd_fit6 = update(forward3, . ~ . + religion)
+fwd_fit7 = update(forward3, . ~ . + maritalstatus)
+fwd_fit8 = update(forward3, . ~ . + insurancetype)
+fwd_fit9 = update(forward3, . ~ . + bmi)
+fwd_fit10 = update(forward3, . ~ . + o2sat_cat)
+fwd_fit11 = update(forward3, . ~ . + temperature_cat)
+fwd_fit12 = update(forward3, . ~ . + heartrate_transformed)
+fwd_fit13 = update(forward3, . ~ . + mean_arterial_pressure)
+
+# Extract p-values from results
+fwd_all4 = rbind(min(tidy(fwd_fit1)$p.value[-1:-4]), min(tidy(fwd_fit2)$p.value[-1:-4]),
+                 min(tidy(fwd_fit3)$p.value[-1:-4]), min(tidy(fwd_fit4)$p.value[-1:-4]),
+                 min(tidy(fwd_fit5)$p.value[-1:-4]), min(tidy(fwd_fit6)$p.value[-1:-4]),
+                 min(tidy(fwd_fit7)$p.value[-1:-4]), min(tidy(fwd_fit8)$p.value[-1:-4]),
+                 min(tidy(fwd_fit9)$p.value[-1:-4]), min(tidy(fwd_fit10)$p.value[-1:-4]),
+                 min(tidy(fwd_fit11)$p.value[-1:-4]), min(tidy(fwd_fit12)$p.value[-1:-4]),
+                 min(tidy(fwd_fit13)$p.value[-1:-4])) %>% 
+  as.data.frame()
+
+colnames(fwd_all4) = "p_value"
+
+# Rank p-values
+fwd_all4 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: heartrate_transformed
+forward4 = update(forward3, . ~ . + heartrate_transformed)
+
+###########################################################
+
+# Step 5: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward4, . ~ . + is30dayreadmit)
+fwd_fit2 = update(forward4, . ~ . + cindex)
+fwd_fit3 = update(forward4, . ~ . + icu_flag)
+fwd_fit4 = update(forward4, . ~ . + gender)
+fwd_fit5 = update(forward4, . ~ . + race)
+fwd_fit6 = update(forward4, . ~ . + religion)
+fwd_fit7 = update(forward4, . ~ . + maritalstatus)
+fwd_fit8 = update(forward4, . ~ . + insurancetype)
+fwd_fit9 = update(forward4, . ~ . + bmi)
+fwd_fit10 = update(forward4, . ~ . + o2sat_cat)
+fwd_fit11 = update(forward4, . ~ . + temperature_cat)
+fwd_fit12 = update(forward4, . ~ . + mean_arterial_pressure)
+
+# Extract p-values from results
+fwd_all5 = rbind(min(tidy(fwd_fit1)$p.value[-1:-5]), min(tidy(fwd_fit2)$p.value[-1:-5]),
+                 min(tidy(fwd_fit3)$p.value[-1:-5]), min(tidy(fwd_fit4)$p.value[-1:-5]),
+                 min(tidy(fwd_fit5)$p.value[-1:-5]), min(tidy(fwd_fit6)$p.value[-1:-5]),
+                 min(tidy(fwd_fit7)$p.value[-1:-5]), min(tidy(fwd_fit8)$p.value[-1:-5]),
+                 min(tidy(fwd_fit9)$p.value[-1:-5]), min(tidy(fwd_fit10)$p.value[-1:-5]),
+                 min(tidy(fwd_fit11)$p.value[-1:-5]), min(tidy(fwd_fit12)$p.value[-1:-5])) %>% 
+  as.data.frame()
+
+colnames(fwd_all5) = "p_value"
+
+# Rank p-values
+fwd_all5 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: mean_arterial_pressure
+forward5 = update(forward4, . ~ . + mean_arterial_pressure)
+
+###########################################################
+
+# Step 6: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward5, . ~ . + is30dayreadmit)
+fwd_fit2 = update(forward5, . ~ . + cindex)
+fwd_fit3 = update(forward5, . ~ . + icu_flag)
+fwd_fit4 = update(forward5, . ~ . + gender)
+fwd_fit5 = update(forward5, . ~ . + race)
+fwd_fit6 = update(forward5, . ~ . + religion)
+fwd_fit7 = update(forward5, . ~ . + maritalstatus)
+fwd_fit8 = update(forward5, . ~ . + insurancetype)
+fwd_fit9 = update(forward5, . ~ . + bmi)
+fwd_fit10 = update(forward5, . ~ . + o2sat_cat)
+fwd_fit11 = update(forward5, . ~ . + temperature_cat)
+
+# Extract p-values from results
+fwd_all6 = rbind(min(tidy(fwd_fit1)$p.value[-1:-6]), min(tidy(fwd_fit2)$p.value[-1:-6]),
+                 min(tidy(fwd_fit3)$p.value[-1:-6]), min(tidy(fwd_fit4)$p.value[-1:-6]),
+                 min(tidy(fwd_fit5)$p.value[-1:-6]), min(tidy(fwd_fit6)$p.value[-1:-6]),
+                 min(tidy(fwd_fit7)$p.value[-1:-6]), min(tidy(fwd_fit8)$p.value[-1:-6]),
+                 min(tidy(fwd_fit9)$p.value[-1:-6]), min(tidy(fwd_fit10)$p.value[-1:-6]),
+                 min(tidy(fwd_fit11)$p.value[-1:-6])) %>% 
+  as.data.frame()
+
+colnames(fwd_all6) = "p_value"
+
+# Rank p-values
+fwd_all6 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: cindex
+forward6 = update(forward5, . ~ . + cindex)
+
+###########################################################
+
+# Step 7: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward6, . ~ . + is30dayreadmit)
+fwd_fit2 = update(forward6, . ~ . + icu_flag)
+fwd_fit3 = update(forward6, . ~ . + gender)
+fwd_fit4 = update(forward6, . ~ . + race)
+fwd_fit5 = update(forward6, . ~ . + religion)
+fwd_fit6 = update(forward6, . ~ . + maritalstatus)
+fwd_fit7 = update(forward6, . ~ . + insurancetype)
+fwd_fit8 = update(forward6, . ~ . + bmi)
+fwd_fit9 = update(forward6, . ~ . + o2sat_cat)
+fwd_fit10 = update(forward6, . ~ . + temperature_cat)
+
+# Extract p-values from results
+fwd_all7 = rbind(min(tidy(fwd_fit1)$p.value[-1:-9]), min(tidy(fwd_fit2)$p.value[-1:-9]),
+                 min(tidy(fwd_fit3)$p.value[-1:-9]), min(tidy(fwd_fit4)$p.value[-1:-9]),
+                 min(tidy(fwd_fit5)$p.value[-1:-9]), min(tidy(fwd_fit6)$p.value[-1:-9]),
+                 min(tidy(fwd_fit7)$p.value[-1:-9]), min(tidy(fwd_fit8)$p.value[-1:-9]),
+                 min(tidy(fwd_fit9)$p.value[-1:-9]), min(tidy(fwd_fit10)$p.value[-1:-9])) %>% 
+  as.data.frame()
+
+colnames(fwd_all7) = "p_value"
+
+# Rank p-values
+fwd_all7 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: temperature_cat
+forward7 = update(forward6, . ~ . + temperature_cat)
+
+###########################################################
+
+# Step 8: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward7, . ~ . + is30dayreadmit)
+fwd_fit2 = update(forward7, . ~ . + icu_flag)
+fwd_fit3 = update(forward7, . ~ . + gender)
+fwd_fit4 = update(forward7, . ~ . + race)
+fwd_fit5 = update(forward7, . ~ . + religion)
+fwd_fit6 = update(forward7, . ~ . + maritalstatus)
+fwd_fit7 = update(forward7, . ~ . + insurancetype)
+fwd_fit8 = update(forward7, . ~ . + bmi)
+fwd_fit9 = update(forward7, . ~ . + o2sat_cat)
+
+# Extract p-values from results
+fwd_all8 = rbind(min(tidy(fwd_fit1)$p.value[-1:-11]), min(tidy(fwd_fit2)$p.value[-1:-11]),
+                 min(tidy(fwd_fit3)$p.value[-1:-11]), min(tidy(fwd_fit4)$p.value[-1:-11]),
+                 min(tidy(fwd_fit5)$p.value[-1:-11]), min(tidy(fwd_fit6)$p.value[-1:-11]),
+                 min(tidy(fwd_fit7)$p.value[-1:-11]), min(tidy(fwd_fit8)$p.value[-1:-11]),
+                 min(tidy(fwd_fit9)$p.value[-1:-11])) %>% 
+  as.data.frame()
+
+colnames(fwd_all8) = "p_value"
+
+# Rank p-values
+fwd_all8 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: is30dayreadmit
+forward8 = update(forward7, . ~ . + is30dayreadmit)
+
+###########################################################
+
+# Step 9: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward8, . ~ . + icu_flag)
+fwd_fit2 = update(forward8, . ~ . + gender)
+fwd_fit3 = update(forward8, . ~ . + race)
+fwd_fit4 = update(forward8, . ~ . + religion)
+fwd_fit5 = update(forward8, . ~ . + maritalstatus)
+fwd_fit6 = update(forward8, . ~ . + insurancetype)
+fwd_fit7 = update(forward8, . ~ . + bmi)
+fwd_fit8 = update(forward8, . ~ . + o2sat_cat)
+
+# Extract p-values from results
+fwd_all9 = rbind(min(tidy(fwd_fit1)$p.value[-1:-12]), min(tidy(fwd_fit2)$p.value[-1:-12]),
+                 min(tidy(fwd_fit3)$p.value[-1:-12]), min(tidy(fwd_fit4)$p.value[-1:-12]),
+                 min(tidy(fwd_fit5)$p.value[-1:-12]), min(tidy(fwd_fit6)$p.value[-1:-12]),
+                 min(tidy(fwd_fit7)$p.value[-1:-12]), min(tidy(fwd_fit8)$p.value[-1:-12])) %>% 
+  as.data.frame()
+
+colnames(fwd_all9) = "p_value"
+
+# Rank p-values
+fwd_all9 %>% mutate(rank = rank(p_value))
+
+# Enter first the one with the lowest p-value: insurancetype
+forward9 = update(forward8, . ~ . + insurancetype)
+
+###########################################################
+
+# Step 10: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward9, . ~ . + icu_flag)
+fwd_fit2 = update(forward9, . ~ . + gender)
+fwd_fit3 = update(forward9, . ~ . + race)
+fwd_fit4 = update(forward9, . ~ . + religion)
+fwd_fit5 = update(forward9, . ~ . + maritalstatus)
+fwd_fit6 = update(forward9, . ~ . + bmi)
+fwd_fit7 = update(forward9, . ~ . + o2sat_cat)
+
+# Extract p-values from results
+fwd_all10 = rbind(min(tidy(fwd_fit1)$p.value[-1:-14]), min(tidy(fwd_fit2)$p.value[-1:-14]),
+                 min(tidy(fwd_fit3)$p.value[-1:-14]), min(tidy(fwd_fit4)$p.value[-1:-14]),
+                 min(tidy(fwd_fit5)$p.value[-1:-14]), min(tidy(fwd_fit6)$p.value[-1:-14]),
+                 min(tidy(fwd_fit7)$p.value[-1:-14])) %>% 
+  as.data.frame()
+
+colnames(fwd_all10) = "p_value"
+
+# Rank p-values
+fwd_all10 %>% mutate(rank = rank(p_value))
+
+###########################################################
+```
+
+```{r print,echo=FALSE}
+tidy(forward9)
+```
+
+In the Forward Elimination procedure (without applying `olsrr` package), we got a model: __log_length_of_stay ~ is30dayreadmit + cindex + evisit + age + insurancetype + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure__.
+
+(Question) For variates with more than two levels, which p value of these levels should be chooses for comparing?
+
+****
+
+> Criterion-based procedures
+
+```{r criterion_forward,include=FALSE}
+hospital_fd = cleaned_data_for_analyses_nomews %>% 
+  select(log_length_of_stay, age, evisit, respirationrate_transformed, heartrate_transformed, mean_arterial_pressure, is30dayreadmit, insurancetype, race)
+
+# Summary of models for each size (one model per size)
+b_fd = regsubsets(log_length_of_stay ~ ., data = hospital_fd, nvmax = 20)
+rs_fd = summary(b_fd)
+
+# Plots of Cp and Adj-R2 as functions of parameters
+plot(1:13, rs_fd$cp, xlab = "No of parameters", ylab = "Cp Statistic")
+abline(0,1)
+
+plot(1:13, rs_fd$adjr2, xlab = "No of parameters", ylab = "Adj R2")
+```
+
+```{r criterion_backward,include=FALSE}
+hospital_bd = cleaned_data_for_analyses_nomews %>% 
+  select(log_length_of_stay, age, evisit, respirationrate_transformed, heartrate_transformed, mean_arterial_pressure, is30dayreadmit, insurancetype, gender, maritalstatus)
+
+# Summary of models for each size (one model per size)
+b_bd = regsubsets(log_length_of_stay ~ ., data = hospital_bd, nvmax = 20)
+rs_bd = summary(b_bd)
+
+# Plots of Cp and Adj-R2 as functions of parameters
+plot(1:10, rs_bd$cp, xlab = "No of parameters", ylab = "Cp Statistic")
+abline(0,1)
+
+plot(1:10, rs_bd$adjr2, xlab = "No of parameters", ylab = "Adj R2")
+```
+
+```{r}
+# Backward
+rs_bd
+# Forward
+rs_fd
+```
+
+> Outliers

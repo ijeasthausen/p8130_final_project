@@ -1,0 +1,93 @@
+---
+title: "code_Xinyan"
+author: "Xinyan Zheng"
+date: "December 10, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(leaps)
+
+#load the data
+hos = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+str(hos)
+
+```
+
+```{r}
+
+# using criterion-based method
+
+attach(hos)
+criterion_bw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
+               + gender + maritalstatus + insurancetype + heartrate_transformed
+               + respirationrate_transformed+mean_arterial_pressure, data = hos,
+               nvmax= 15, nbest = 1)
+criterion_fw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
+               + heartrate_transformed + respirationrate_transformed 
+               + mean_arterial_pressure + insurancetype + race, data = hos, nvmax= 15
+               , nbest = 1)
+criterion_sw_0.05 <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + + maritalstatus 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
+criterion_sw_0.10 <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + gender + maritalstatus + temperature_cat 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
+
+#make plots to show the value of criterion
+
+criterion_plot <- function(criterion, data, method){
+  
+  res_cri <- summary(criterion)
+  par(mfrow=c(2,2))
+  plot(1:dim(res_cri$which)[1], res_cri$cp, pch=16, xlab="No of parameters", ylab="Cp Statistic")
+  abline(0,1)
+  plot(1:dim(res_cri$which)[1], res_cri$adjr2, pch=16, xlab="No of parameters", ylab="Adj R2")
+  plot(1:dim(res_cri$which)[1], res_cri$rss, pch=16, xlab="No of parameters", ylab="rss")
+  plot(1:dim(res_cri$which)[1], res_cri$bic, pch=16, xlab="No of parameters", ylab="BIC")
+}
+
+criterion_plot(criterion_bw, data= hos, method = "backward eliminaton") 
+criterion_plot(criterion_fw, data= hos, method = "forward eliminaton" )
+criterion_plot(criterion_sw_0.10, data= hos, method = "stepwise 0.10" ) 
+criterion_plot(criterion_sw_0.05, data= hos, method = "stepwise 0.05")
+  
+# make table to show the value of criterion
+
+best <- function(criterion) {
+  
+  subsets <- with(summary(criterion), cbind(p = as.numeric(rownames(which)),
+                                            which, rss, rsq, adjr2, cp, bic))
+  return(round(subsets,4))%>% as.tibble()
+}  
+
+best(criterion_bw)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_fw)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_sw_0.05)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_sw_0.10)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+
+criterion_result <- full_join(best(criterion_bw), best(criterion_fw))%>%
+  full_join(., best(criterion_sw_0.05))%>%
+  full_join(., best(criterion_sw_0.10))%>%
+  select(p, rss, rsq, adjr2, cp, bic, everything())
+
+
+write_csv(criterion_result, "criterion_result.csv")
+
+
+
