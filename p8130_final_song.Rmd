@@ -2,22 +2,28 @@
 title: "Backward Elimination"
 author: "Shan-Shan Song, ss5422@columbia.edu"
 date: "12/10/2017"
-output: html_document
+output: pdf_document
 ---
 
 ```{r bwd_import, message=FALSE, warning=FALSE, include=FALSE}
 library(tidyverse)
 library(broom)
 library(plyr)
+if (!require("kableExtra")) install.packages("kableExtra")
+
 data_bwd = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
   select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
-str(data_bwd)
+# str(data_bwd)
 ```
+
+## Backward Elimination: "By-hand" 
+
+### Procedures
 
 - start with all predictors in the model
 
-```{r bwd_full, message=FALSE, warning=FALSE, include=FALSE}
+```{r bwd_full, message=FALSE, warning=FALSE, results = "hide"}
 # fit
 bwd_fit_full = lm(log_length_of_stay ~ ., data = data_bwd)
 arrange(tidy(bwd_fit_full), desc(p.value))
@@ -27,7 +33,7 @@ arrange(tidy(bwd_fit_full), desc(p.value))
 - refit the model and move on
 - stop when all p-values <= **alpha_crit (p-to-remove) = 0.05**.
 
-```{r bwd_back, message=FALSE, warning=FALSE, include=FALSE}
+```{r bwd_back, message=FALSE, warning=FALSE, results = "hide"}
 # step 1: no race
 bwd_step1 = update(bwd_fit_full, . ~ . -race)
 arrange(tidy(bwd_step1), desc(p.value))
@@ -79,9 +85,37 @@ for (i in 1:8){
 }
 ```
 
-```{r bwd_results}
+### Results
+
+```{r bwd_results, message=FALSE, warning=FALSE}
 # backward p-values
-step_pvalue %>% DT::datatable()
+step_pvalue %>% 
+  knitr::kable(format = "latex", 
+               caption = "P-values of Backward Elimination",
+               booktabs = TRUE) %>% 
+  kableExtra::kable_styling(latex_options = "scale_down")
+
 # summary of model from backward elimination
-bwd_step8 %>% summary()
+bwd_step8 %>% summary() 
+
+#???lalalal
+library(leaps)
+data_cp = data_bwd %>% select(log_length_of_stay, 
+                    is30dayreadmit, 
+                    evisit,
+                    age,
+                    gender,
+                    maritalstatus,
+                    insurancetype,
+                    heartrate_transformed, 
+                    respirationrate_transformed,
+                    mean_arterial_pressure) %>% 
+  distinct()
+leaps(x = data_cp[,-1],
+      y = data_cp$log_length_of_stay,
+      method = "Cp") %>%
+Cpplot()
+
+library(leaps)
+leaps(x = data_bwd[,-1], y = data_bwd[,1], nbest=2, method="Cp")
 ```
