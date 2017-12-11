@@ -10,80 +10,84 @@ library(tidyverse)
 library(leaps)
 
 #load the data
-data_bwd = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
+hos = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
   select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
-str(data_bwd)
+str(hos)
 
 ```
-
 
 ```{r}
-# using the selected variable from automatic method and go on using criterion-based method
-attach(data_bwd)
-model_bw <- lm(log_length_of_stay ~ is30dayreadmit + evisit + age 
-                           + gender + maritalstatus + insurancetype
-                           + heartrate_transformed + respirationrate_transformed 
-                           + mean_arterial_pressure)
-model_fw <- lm(log_length_of_stay ~ is30dayreadmit + evisit + age 
-                           + race + insurancetype + heartrate_transformed 
-                           + respirationrate_transformed + mean_arterial_pressure)
 
-# for model yield from backward elimination method
+# using criterion-based method
+
+attach(hos)
 criterion_bw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
-                           + gender + maritalstatus + insurancetype
-                           + heartrate_transformed + respirationrate_transformed 
-                           + mean_arterial_pressure, data=data_bwd, nvmax = 15)
-res_bw <- summary(criterion_bw)
-par(mfrow = c(2,2))
-plot(1:10, res_bw$cp, xlab = "No of parameters", ylab = "Cp Statistic", main = " Cp Statisticof model from bw")
-abline(0,1)
-plot(1:10, res_bw$adjr2, xlab = "No of parameters", ylab = "Adj R2", main = " Adj R2 of model from bw" )
-plot(1:10, res_bw$rss, xlab = "No of parameters", ylab = "rss", main = " rss of model from bw")
-plot(1:10, res_bw$bic, xlab = "No of parameters", ylab = "bic",main = " bic of model from bw")
-
-# for model yield from forward elimination method
+               + gender + maritalstatus + insurancetype + heartrate_transformed
+               + respirationrate_transformed+mean_arterial_pressure, data = hos,
+               nvmax= 15, nbest = 1)
 criterion_fw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
-                           + race + insurancetype + heartrate_transformed 
-                           + respirationrate_transformed + mean_arterial_pressure, data = data_bwd, nvmax = 15)
-res_fw <- summary(criterion_fw)
-par(mfrow = c(2,2))
-plot(1:13, res_fw$cp, xlab = "No of parameters", ylab = "Cp Statistic", main = " Cp Statistic of model from fw")
-abline(0,1)
-plot(1:13, res_fw$adjr2, xlab = "No of parameters", ylab = "Adj R2", main = " Adj R2 of model from fw")
-plot(1:13, res_fw$rss, xlab = "No of parameters", ylab = "rss", main = " rss of model from fw")
-plot(1:13, res_fw$bic, xlab = "No of parameters", ylab = "bic", main = " bic of model from fw")
-```
+               + heartrate_transformed + respirationrate_transformed 
+               + mean_arterial_pressure + insurancetype + race, data = hos, nvmax= 15
+               , nbest = 1)
+criterion_sw_0.05 <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + + maritalstatus 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
+criterion_sw_0.10 <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + gender + maritalstatus + temperature_cat 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
 
-From plots, we see for model yield from backward elimination method, the best one would be 
-log_length_of_stay = 
-2.532 + 0.1708 \* is30dayreadmit +  0.06943 \* evisit + 0.009628 \* age 
-+ 0.06741 \* genderMale + 0.07075 \* maritalstatusNot Married 
-- 0.1648 \* insurancetypeMedicare - 0.2438 \* insurancetypePrivate 
-- 0.002173 \* heartrate_transformed - 0.02048 \* respirationrate_transformed 
-- 0.006086 \* mean_arterial_pressure.
+#make plots to show the value of criterion
 
-On the other hand, for model yield from forward elimination method, the best one would be 
-
-```{r, include=FALSE}
-#using the function provided in class, using this way we can see the value for each criterion 
-best <- function(model, ...) 
-{
-  subsets <- regsubsets(formula(model), model.frame(model), ..., nvmax = 15)
-  subsets <- with(summary(subsets),
-                  cbind(p = as.numeric(rownames(which)), which, rss, rsq, adjr2, cp, bic))
+criterion_plot <- function(criterion, data, method){
   
-  return(subsets)
+  res_cri <- summary(criterion)
+  par(mfrow=c(2,2))
+  plot(1:dim(res_cri$which)[1], res_cri$cp, pch=16, xlab="No of parameters", ylab="Cp Statistic")
+  abline(0,1)
+  plot(1:dim(res_cri$which)[1], res_cri$adjr2, pch=16, xlab="No of parameters", ylab="Adj R2")
+  plot(1:dim(res_cri$which)[1], res_cri$rss, pch=16, xlab="No of parameters", ylab="rss")
+  plot(1:dim(res_cri$which)[1], res_cri$bic, pch=16, xlab="No of parameters", ylab="BIC")
+}
+
+criterion_plot(criterion_bw, data= hos, method = "backward eliminaton") 
+criterion_plot(criterion_fw, data= hos, method = "forward eliminaton" )
+criterion_plot(criterion_sw_0.10, data= hos, method = "stepwise 0.10" ) 
+criterion_plot(criterion_sw_0.05, data= hos, method = "stepwise 0.05")
+  
+# make table to show the value of criterion
+
+best <- function(criterion) {
+  
+  subsets <- with(summary(criterion), cbind(p = as.numeric(rownames(which)),
+                                            which, rss, rsq, adjr2, cp, bic))
+  return(round(subsets,4))%>% as.tibble()
 }  
 
-# Select the 'best' 2 models of all subsets
-res_bw <- round(best(model_bw, nbest = 1), 4)
-res_fw <- round(best(model_fw, nbest = 1), 4)
-```
+best(criterion_bw)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_fw)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_sw_0.05)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_sw_0.10)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+
+criterion_result <- full_join(best(criterion_bw), best(criterion_fw))%>%
+  full_join(., best(criterion_sw_0.05))%>%
+  full_join(., best(criterion_sw_0.10))%>%
+  select(p, rss, rsq, adjr2, cp, bic, everything())
 
 
-```{r}
-cri_bw <- c(res_bw[-1, 13:17], AIC(model_bw))
-cri_fw <- c(res_fw[,16:20], AIC(model_fw))
-rbind(cri_bw,cri_fw)
-```
+write_csv(criterion_result, "criterion_result.csv")
+
+
+
