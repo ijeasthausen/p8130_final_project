@@ -17,6 +17,7 @@ str(data_bwd)
 
 ```
 
+
 ```{r}
 # using the selected variable from automatic method and go on using criterion-based method
 attach(data_bwd)
@@ -32,36 +33,43 @@ model_fw <- lm(log_length_of_stay ~ is30dayreadmit + evisit + age
 criterion_bw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
                            + gender + maritalstatus + insurancetype
                            + heartrate_transformed + respirationrate_transformed 
-                           + mean_arterial_pressure, data=data_bwd, nvmax = 10)
-res_bw<-summary(criterion_bw)
-par(mfrow=c(2,2))
-plot(1:10, res_bw$cp, xlab="No of parameters", ylab="Cp Statistic", main = " Cp Statisticof model from bw")
+                           + mean_arterial_pressure, data=data_bwd, nvmax = 15)
+res_bw <- summary(criterion_bw)
+par(mfrow = c(2,2))
+plot(1:10, res_bw$cp, xlab = "No of parameters", ylab = "Cp Statistic", main = " Cp Statisticof model from bw")
 abline(0,1)
-plot(1:10, res_bw$adjr2, xlab="No of parameters", ylab="Adj R2", main = " Adj R2 of model from bw" )
-plot(1:10, res_bw$rss, xlab="No of parameters", ylab="rss", main = " rss of model from bw")
-plot(1:10, res_bw$bic, xlab="No of parameters", ylab="bic",main = " bic of model from bw")
+plot(1:10, res_bw$adjr2, xlab = "No of parameters", ylab = "Adj R2", main = " Adj R2 of model from bw" )
+plot(1:10, res_bw$rss, xlab = "No of parameters", ylab = "rss", main = " rss of model from bw")
+plot(1:10, res_bw$bic, xlab = "No of parameters", ylab = "bic",main = " bic of model from bw")
 
 # for model yield from forward elimination method
 criterion_fw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
                            + race + insurancetype + heartrate_transformed 
-                           + respirationrate_transformed + mean_arterial_pressure, data=data_bwd, nvmax = 9)
-res_fw<-summary(criterion_fw)
-par(mfrow=c(2,2))
-plot(1:9, res_fw$cp, xlab="No of parameters", ylab="Cp Statistic", main = " Cp Statisticof model from fw")
+                           + respirationrate_transformed + mean_arterial_pressure, data = data_bwd, nvmax = 15)
+res_fw <- summary(criterion_fw)
+par(mfrow = c(2,2))
+plot(1:13, res_fw$cp, xlab = "No of parameters", ylab = "Cp Statistic", main = " Cp Statistic of model from fw")
 abline(0,1)
-plot(1:9, res_fw$adjr2, xlab="No of parameters", ylab="Adj R2", main = " Adj R2 of model from fw")
-plot(1:9, res_fw$rss, xlab="No of parameters", ylab="rss", main = " rss of model from fw")
-plot(1:9, res_fw$bic, xlab="No of parameters", ylab="bic", main = " bic of model from fw")
+plot(1:13, res_fw$adjr2, xlab = "No of parameters", ylab = "Adj R2", main = " Adj R2 of model from fw")
+plot(1:13, res_fw$rss, xlab = "No of parameters", ylab = "rss", main = " rss of model from fw")
+plot(1:13, res_fw$bic, xlab = "No of parameters", ylab = "bic", main = " bic of model from fw")
 ```
 
-From plots, we see for both subsets, the model with all of the variates are the best.
+From plots, we see for model yield from backward elimination method, the best one would be 
+log_length_of_stay = 
+2.532 + 0.1708 \* is30dayreadmit +  0.06943 \* evisit + 0.009628 \* age 
++ 0.06741 \* genderMale + 0.07075 \* maritalstatusNot Married 
+- 0.1648 \* insurancetypeMedicare - 0.2438 \* insurancetypePrivate 
+- 0.002173 \* heartrate_transformed - 0.02048 \* respirationrate_transformed 
+- 0.006086 \* mean_arterial_pressure.
 
+On the other hand, for model yield from forward elimination method, the best one would be 
 
 ```{r, include=FALSE}
 #using the function provided in class, using this way we can see the value for each criterion 
 best <- function(model, ...) 
 {
-  subsets <- regsubsets(formula(model), model.frame(model), ..., nvmax = 10)
+  subsets <- regsubsets(formula(model), model.frame(model), ..., nvmax = 15)
   subsets <- with(summary(subsets),
                   cbind(p = as.numeric(rownames(which)), which, rss, rsq, adjr2, cp, bic))
   
@@ -69,16 +77,13 @@ best <- function(model, ...)
 }  
 
 # Select the 'best' 2 models of all subsets
-round(best(model_bw, nbest = 2), 4)
-
+res_bw <- round(best(model_bw, nbest = 1), 4)
+res_fw <- round(best(model_fw, nbest = 1), 4)
 ```
 
 
 ```{r}
-AIC(model_bw)
-AIC(model_fw)
-BIC(model_bw)
-BIC(model_fw)
-
-
-````
+cri_bw <- c(res_bw[-1, 13:17], AIC(model_bw))
+cri_fw <- c(res_fw[,16:20], AIC(model_fw))
+rbind(cri_bw,cri_fw)
+```
