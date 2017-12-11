@@ -6,22 +6,20 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#library(knitr)
+
 library(tidyverse)
+library(olsrr)
 library(broom)
-#library(janitor)
-#library(readxl)
-#library(stringr)
-#library(readr)
-#library(gridExtra)
+library(leaps)
+
 cleaned_data_for_analyses = read_csv("./data/cleaned_data_for_analyses.csv") %>% 
   select(-X1, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
-
-str(cleaned_data_for_analyses)
 ```
 
-```{r}
+Since __the Modified Early Warning Score__ (`MEWS`) determines the degree of illness of a patient based on respiratory rate, oxygen saturation, temperature, blood pressure, heart rate, AVPU response, then there will probably be multicollinearity between `MEWS` and the variables in __Vital Signs__. So we compare the two procedures that include `MEWS` and exclude `MEWS`.
+
+```{r olsrr,message=FALSE}
 # include mews
 fwd_model = lm(log_length_of_stay ~ ., data = cleaned_data_for_analyses)
 ols_step_forward(fwd_model, penter = 0.05)
@@ -31,6 +29,73 @@ cleaned_data_for_analyses_nomews = cleaned_data_for_analyses %>%
   select(-mews)
 fwd_model_nomews = lm(log_length_of_stay ~ ., data = cleaned_data_for_analyses_nomews)
 ols_step_forward(fwd_model_nomews, penter = 0.05)
-
-# the two models above are the same.
 ```
+
+The two models above are the same. The final model we get from forward elimination is __log_length_of_stay ~ age + evisit + respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + is30dayreadmit1 + insurancetype + gender + maritalstatus__.
+
+```{r byhand,include=FALSE}
+# exclude mews
+
+# Step 1:  Fit simple linear regressions for all variables,look for the variable with lowest p-value
+fwd_fit1 = lm(log_length_of_stay ~ is30dayreadmit, data = cleaned_data_for_analyses_nomews)
+fwd_fit2 = lm(log_length_of_stay ~ cindex, data = cleaned_data_for_analyses_nomews)
+fwd_fit3 = lm(log_length_of_stay ~ evisit, data = cleaned_data_for_analyses_nomews)
+fwd_fit4 = lm(log_length_of_stay ~ icu_flag, data = cleaned_data_for_analyses_nomews)
+fwd_fit5 = lm(log_length_of_stay ~ age, data = cleaned_data_for_analyses_nomews)
+fwd_fit6 = lm(log_length_of_stay ~ gender, data = cleaned_data_for_analyses_nomews)
+fwd_fit7 = lm(log_length_of_stay ~ race, data = cleaned_data_for_analyses_nomews)
+fwd_fit8 = lm(log_length_of_stay ~ religion, data = cleaned_data_for_analyses_nomews)
+fwd_fit9 = lm(log_length_of_stay ~ maritalstatus, data = cleaned_data_for_analyses_nomews)
+fwd_fit10 = lm(log_length_of_stay ~ insurancetype, data = cleaned_data_for_analyses_nomews)
+fwd_fit11 = lm(log_length_of_stay ~ bmi, data = cleaned_data_for_analyses_nomews)
+fwd_fit12 = lm(log_length_of_stay ~ o2sat_cat, data = cleaned_data_for_analyses_nomews)
+fwd_fit13 = lm(log_length_of_stay ~ temperature_cat, data = cleaned_data_for_analyses_nomews)
+fwd_fit14 = lm(log_length_of_stay ~ heartrate_transformed, data = cleaned_data_for_analyses_nomews)
+fwd_fit15 = lm(log_length_of_stay ~ respirationrate_transformed, data = cleaned_data_for_analyses_nomews)
+fwd_fit16 = lm(log_length_of_stay ~ mean_arterial_pressure, data = cleaned_data_for_analyses_nomews)
+
+#(Question) For variates with more than two levels, which p value should be chooses for comparing?
+```
+
+****
+
+> Criterion-based procedures
+
+```{r criterion_forward,include=FALSE}
+hospital_fd = cleaned_data_for_analyses_nomews %>% 
+  select(log_length_of_stay, age, evisit, respirationrate_transformed, heartrate_transformed, mean_arterial_pressure, is30dayreadmit, insurancetype, race)
+
+# Summary of models for each size (one model per size)
+b_fd = regsubsets(log_length_of_stay ~ ., data = hospital_fd, nvmax = 20)
+rs_fd = summary(b_fd)
+
+# Plots of Cp and Adj-R2 as functions of parameters
+plot(1:13, rs_fd$cp, xlab = "No of parameters", ylab = "Cp Statistic")
+abline(0,1)
+
+plot(1:13, rs_fd$adjr2, xlab = "No of parameters", ylab = "Adj R2")
+```
+
+```{r criterion_backward,include=FALSE}
+hospital_bd = cleaned_data_for_analyses_nomews %>% 
+  select(log_length_of_stay, age, evisit, respirationrate_transformed, heartrate_transformed, mean_arterial_pressure, is30dayreadmit, insurancetype, gender, maritalstatus)
+
+# Summary of models for each size (one model per size)
+b_bd = regsubsets(log_length_of_stay ~ ., data = hospital_bd, nvmax = 20)
+rs_bd = summary(b_bd)
+
+# Plots of Cp and Adj-R2 as functions of parameters
+plot(1:10, rs_bd$cp, xlab = "No of parameters", ylab = "Cp Statistic")
+abline(0,1)
+
+plot(1:10, rs_bd$adjr2, xlab = "No of parameters", ylab = "Adj R2")
+```
+
+```{r}
+# Backward
+rs_bd
+# Forward
+rs_fd
+```
+
+> Outliers
