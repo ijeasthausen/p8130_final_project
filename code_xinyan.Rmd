@@ -35,12 +35,12 @@ model_sw_0.05 <- lm(log_length_of_stay ~ is30dayreadmit + cindex
                     + insurancetype + heartrate_transformed 
                     + respirationrate_transformed 
                     + mean_arterial_pressure)
-model_sw_0.01 <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+model_sw_0.10 <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
                     + evisit + age + gender + maritalstatus + temperature_cat 
                     + insurancetype + heartrate_transformed 
                     + respirationrate_transformed 
                     + mean_arterial_pressure)
-AIC(model_bw, model_fw_new, model_sw_0.05, model_sw_0.01)
+AIC(model_bw, model_fw_new, model_sw_0.05, model_sw_0.10)
 
 
 
@@ -122,5 +122,58 @@ criterion_result <- full_join(best(criterion_bw), best(criterion_fw))%>%
 
 write_csv(criterion_result, "criterion_result.csv")
 
+# ANOVA for nested model
+anova(model_bw, model_sw_0.10)
+anova(model_fw_new, model_sw_0.10)
+anova(model_sw_0.05, model_sw_0.10)
+anova(model_fw_new, model_sw_0.05)
+
+model_base <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_gender <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + gender + 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_marritalstat <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + maritalstatus +
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_both <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + gender + maritalstatus +
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_both_int <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + gender + maritalstatus 
+                    + gender * maritalstatus  + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+summary(model_both_int)
+anova(model_base, model_gender)
+anova(model_base, model_marritalstat)
+anova(model_base, model_both)
+anova(model_base, model_both_int)
+
+par(mfrow = c(1, 2))
+# Residuals vs fitted values plot
+plot(fitted(model_sw_0.01), resid(model_sw_0.01), xlab = "Predicted/Fitted value", ylab = "Residual")
+title("(a) Residual Plot for log_length_of_stay ")
+abline(0, 0)
+
+# Quantile - Quantile plot (QQ-plot)
+
+qqnorm(resid(model_sw_0.01), xlab = "Expected Value", ylab = "Residual", main = "")
+qqline(resid(model_sw_0.01))
+title("(a) QQ Plot for log_length_of_stay")
+
+plot(model_sw_0.01)
+
+
+```
 
 
