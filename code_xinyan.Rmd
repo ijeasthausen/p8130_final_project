@@ -22,6 +22,29 @@ str(hos)
 # using criterion-based method
 
 attach(hos)
+model_bw <- lm(log_length_of_stay ~ is30dayreadmit + evisit + age 
+               + gender + maritalstatus + insurancetype + heartrate_transformed
+               + respirationrate_transformed+mean_arterial_pressure)
+model_fw_new <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat  + maritalstatus 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_sw_0.05 <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_sw_0.01 <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + gender + maritalstatus + temperature_cat 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+AIC(model_bw, model_fw_new, model_sw_0.05, model_sw_0.01)
+
+
+
+
 criterion_bw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
                + gender + maritalstatus + insurancetype + heartrate_transformed
                + respirationrate_transformed+mean_arterial_pressure, data = hos,
@@ -30,8 +53,13 @@ criterion_fw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age
                + heartrate_transformed + respirationrate_transformed 
                + mean_arterial_pressure + insurancetype + race, data = hos, nvmax= 15
                , nbest = 1)
+criterion_fw_new <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat  + maritalstatus 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
 criterion_sw_0.05 <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
-                    + evisit + age + temperature_cat + + maritalstatus 
+                    + evisit + age + temperature_cat + 
                     + insurancetype + heartrate_transformed 
                     + respirationrate_transformed 
                     + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
@@ -58,7 +86,8 @@ criterion_plot(criterion_bw, data= hos, method = "backward eliminaton")
 criterion_plot(criterion_fw, data= hos, method = "forward eliminaton" )
 criterion_plot(criterion_sw_0.10, data= hos, method = "stepwise 0.10" ) 
 criterion_plot(criterion_sw_0.05, data= hos, method = "stepwise 0.05")
-  
+criterion_plot(criterion_fw_new, data= hos, method = "forward elimination by hand")
+ 
 # make table to show the value of criterion
 
 best <- function(criterion) {
@@ -80,10 +109,14 @@ best(criterion_sw_0.05)%>%
 best(criterion_sw_0.10)%>% 
   select(p, rss, rsq, adjr2, cp, bic, everything())%>%
   knitr::kable()
+best(criterion_fw_new)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
 
 criterion_result <- full_join(best(criterion_bw), best(criterion_fw))%>%
   full_join(., best(criterion_sw_0.05))%>%
   full_join(., best(criterion_sw_0.10))%>%
+  full_join(.,best(criterion_fw_new))%>%
   select(p, rss, rsq, adjr2, cp, bic, everything())
 
 
