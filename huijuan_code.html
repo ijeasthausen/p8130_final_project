@@ -398,171 +398,43 @@ ols_step_forward(fwd_model_nomews, penter = 0.05)</code></pre>
 <div id="forward-elimination-p-value-0.05" class="section level3">
 <h3>Forward Elimination (p-value: 0.05)</h3>
 <pre><code>##                           term      estimate    std.error  statistic
-## 1                  (Intercept)  2.708920e+00 2.002009e-01 13.5310044
-## 2                          age  8.914850e-03 1.017978e-03  8.7574072
-## 3                       evisit  6.914494e-02 1.064905e-02  6.4930631
-## 4  respirationrate_transformed -1.950772e+02 2.950363e+01 -6.6119737
-## 5        heartrate_transformed -1.937471e+03 3.053616e+02 -6.3448403
-## 6       mean_arterial_pressure -5.521930e-03 9.745012e-04 -5.6664167
-## 7               cindexmoderate  8.144764e-02 5.350231e-02  1.5223200
-## 8                 cindexnormal  4.452480e-03 3.912535e-02  0.1138004
-## 9                 cindexsevere  1.958538e-01 4.608743e-02  4.2496143
-## 10          temperature_catlow -9.972406e-02 1.059884e-01 -0.9408963
-## 11       temperature_catnormal -2.632397e-01 6.369175e-02 -4.1330265
-## 12             is30dayreadmit1  1.741478e-01 4.749140e-02  3.6669331
-## 13       insurancetypeMedicare -1.826880e-01 7.933142e-02 -2.3028455
-## 14        insurancetypePrivate -2.591233e-01 7.463144e-02 -3.4720388
+## 1                  (Intercept)  2.647426e+00 2.021889e-01 13.0938234
+## 2                          age  9.054818e-03 1.019495e-03  8.8816689
+## 3                       evisit  6.765243e-02 1.066580e-02  6.3429319
+## 4  respirationrate_transformed -1.943537e+02 2.948686e+01 -6.5911968
+## 5        heartrate_transformed -1.929914e+03 3.051884e+02 -6.3236793
+## 6       mean_arterial_pressure -5.463571e-03 9.742748e-04 -5.6078336
+## 7               cindexmoderate  8.066362e-02 5.346958e-02  1.5085891
+## 8                 cindexnormal  6.422888e-03 3.911163e-02  0.1642194
+## 9                 cindexsevere  1.979213e-01 4.606856e-02  4.2962335
+## 10          temperature_catlow -1.018604e-01 1.059258e-01 -0.9616206
+## 11       temperature_catnormal -2.693755e-01 6.371775e-02 -4.2276364
+## 12             is30dayreadmit1  1.738231e-01 4.746144e-02  3.6624063
+## 13       insurancetypeMedicare -1.752246e-01 7.935997e-02 -2.2079726
+## 14        insurancetypePrivate -2.439642e-01 7.492982e-02 -3.2559027
+## 15    maritalstatusNot Married  6.753821e-02 3.203745e-02  2.1081015
 ##         p.value
-## 1  2.056233e-40
-## 2  3.454022e-18
-## 3  9.971835e-11
-## 4  4.552481e-11
-## 5  2.601477e-10
-## 6  1.612081e-08
-## 7  1.280458e-01
-## 8  9.094045e-01
-## 9  2.213835e-05
-## 10 3.468420e-01
-## 11 3.688986e-05
-## 12 2.502050e-04
-## 13 2.136308e-02
-## 14 5.246218e-04</code></pre>
-<p>In the Forward Elimination procedure (without applying <code>olsrr</code> package), we got a model: <strong>log_length_of_stay ~ is30dayreadmit + cindex + evisit + age + insurancetype + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure</strong>.</p>
+## 1  4.998329e-38
+## 2  1.174801e-18
+## 3  2.633592e-10
+## 4  5.226234e-11
+## 5  2.978319e-10
+## 6  2.256172e-08
+## 7  1.315207e-01
+## 8  8.695707e-01
+## 9  1.798574e-05
+## 10 3.363262e-01
+## 11 2.439933e-05
+## 12 2.546489e-04
+## 13 2.732983e-02
+## 14 1.144277e-03
+## 15 3.511400e-02</code></pre>
+<p>In the Forward Elimination procedure (without applying <code>olsrr</code> package), we got a model: <strong>log_length_of_stay ~ is30dayreadmit + cindex + evisit + age + insurancetype + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure + maritalstatus</strong>.</p>
 <p>(Question) For variates with more than two levels, which p value of these levels should be chooses for comparing?</p>
 <hr />
 <blockquote>
 <p>Criterion-based procedures</p>
 </blockquote>
-<pre class="r"><code># Backward
-rs_bd</code></pre>
-<pre><code>## Subset selection object
-## Call: regsubsets.formula(log_length_of_stay ~ ., data = hospital_bd, 
-##     nvmax = 20)
-## 10 Variables  (and intercept)
-##                             Forced in Forced out
-## age                             FALSE      FALSE
-## evisit                          FALSE      FALSE
-## respirationrate_transformed     FALSE      FALSE
-## heartrate_transformed           FALSE      FALSE
-## mean_arterial_pressure          FALSE      FALSE
-## is30dayreadmit1                 FALSE      FALSE
-## insurancetypeMedicare           FALSE      FALSE
-## insurancetypePrivate            FALSE      FALSE
-## genderMale                      FALSE      FALSE
-## maritalstatusNot Married        FALSE      FALSE
-## 1 subsets of each size up to 10
-## Selection Algorithm: exhaustive
-##           age evisit respirationrate_transformed heartrate_transformed
-## 1  ( 1 )  &quot;*&quot; &quot; &quot;    &quot; &quot;                         &quot; &quot;                  
-## 2  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot; &quot;                         &quot; &quot;                  
-## 3  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot; &quot;                  
-## 4  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 5  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 6  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 7  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 8  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 9  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 10  ( 1 ) &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-##           mean_arterial_pressure is30dayreadmit1 insurancetypeMedicare
-## 1  ( 1 )  &quot; &quot;                    &quot; &quot;             &quot; &quot;                  
-## 2  ( 1 )  &quot; &quot;                    &quot; &quot;             &quot; &quot;                  
-## 3  ( 1 )  &quot; &quot;                    &quot; &quot;             &quot; &quot;                  
-## 4  ( 1 )  &quot; &quot;                    &quot; &quot;             &quot; &quot;                  
-## 5  ( 1 )  &quot;*&quot;                    &quot; &quot;             &quot; &quot;                  
-## 6  ( 1 )  &quot;*&quot;                    &quot;*&quot;             &quot; &quot;                  
-## 7  ( 1 )  &quot;*&quot;                    &quot;*&quot;             &quot; &quot;                  
-## 8  ( 1 )  &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-## 9  ( 1 )  &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-## 10  ( 1 ) &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-##           insurancetypePrivate genderMale maritalstatusNot Married
-## 1  ( 1 )  &quot; &quot;                  &quot; &quot;        &quot; &quot;                     
-## 2  ( 1 )  &quot; &quot;                  &quot; &quot;        &quot; &quot;                     
-## 3  ( 1 )  &quot; &quot;                  &quot; &quot;        &quot; &quot;                     
-## 4  ( 1 )  &quot; &quot;                  &quot; &quot;        &quot; &quot;                     
-## 5  ( 1 )  &quot; &quot;                  &quot; &quot;        &quot; &quot;                     
-## 6  ( 1 )  &quot; &quot;                  &quot; &quot;        &quot; &quot;                     
-## 7  ( 1 )  &quot;*&quot;                  &quot; &quot;        &quot; &quot;                     
-## 8  ( 1 )  &quot;*&quot;                  &quot; &quot;        &quot; &quot;                     
-## 9  ( 1 )  &quot;*&quot;                  &quot; &quot;        &quot;*&quot;                     
-## 10  ( 1 ) &quot;*&quot;                  &quot;*&quot;        &quot;*&quot;</code></pre>
-<pre class="r"><code># Forward
-rs_fd</code></pre>
-<pre><code>## Subset selection object
-## Call: regsubsets.formula(log_length_of_stay ~ ., data = hospital_fd, 
-##     nvmax = 20)
-## 13 Variables  (and intercept)
-##                             Forced in Forced out
-## age                             FALSE      FALSE
-## evisit                          FALSE      FALSE
-## respirationrate_transformed     FALSE      FALSE
-## heartrate_transformed           FALSE      FALSE
-## mean_arterial_pressure          FALSE      FALSE
-## is30dayreadmit1                 FALSE      FALSE
-## insurancetypeMedicare           FALSE      FALSE
-## insurancetypePrivate            FALSE      FALSE
-## raceAsian                       FALSE      FALSE
-## raceNative Amer/Alaskan         FALSE      FALSE
-## raceNatv Hawaii/Pacf Isl        FALSE      FALSE
-## raceOther/Multiracial           FALSE      FALSE
-## raceWhite                       FALSE      FALSE
-## 1 subsets of each size up to 13
-## Selection Algorithm: exhaustive
-##           age evisit respirationrate_transformed heartrate_transformed
-## 1  ( 1 )  &quot;*&quot; &quot; &quot;    &quot; &quot;                         &quot; &quot;                  
-## 2  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot; &quot;                         &quot; &quot;                  
-## 3  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot; &quot;                  
-## 4  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 5  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 6  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 7  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 8  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 9  ( 1 )  &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 10  ( 1 ) &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 11  ( 1 ) &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 12  ( 1 ) &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-## 13  ( 1 ) &quot;*&quot; &quot;*&quot;    &quot;*&quot;                         &quot;*&quot;                  
-##           mean_arterial_pressure is30dayreadmit1 insurancetypeMedicare
-## 1  ( 1 )  &quot; &quot;                    &quot; &quot;             &quot; &quot;                  
-## 2  ( 1 )  &quot; &quot;                    &quot; &quot;             &quot; &quot;                  
-## 3  ( 1 )  &quot; &quot;                    &quot; &quot;             &quot; &quot;                  
-## 4  ( 1 )  &quot; &quot;                    &quot; &quot;             &quot; &quot;                  
-## 5  ( 1 )  &quot;*&quot;                    &quot; &quot;             &quot; &quot;                  
-## 6  ( 1 )  &quot;*&quot;                    &quot;*&quot;             &quot; &quot;                  
-## 7  ( 1 )  &quot;*&quot;                    &quot;*&quot;             &quot; &quot;                  
-## 8  ( 1 )  &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-## 9  ( 1 )  &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-## 10  ( 1 ) &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-## 11  ( 1 ) &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-## 12  ( 1 ) &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-## 13  ( 1 ) &quot;*&quot;                    &quot;*&quot;             &quot;*&quot;                  
-##           insurancetypePrivate raceAsian raceNative Amer/Alaskan
-## 1  ( 1 )  &quot; &quot;                  &quot; &quot;       &quot; &quot;                    
-## 2  ( 1 )  &quot; &quot;                  &quot; &quot;       &quot; &quot;                    
-## 3  ( 1 )  &quot; &quot;                  &quot; &quot;       &quot; &quot;                    
-## 4  ( 1 )  &quot; &quot;                  &quot; &quot;       &quot; &quot;                    
-## 5  ( 1 )  &quot; &quot;                  &quot; &quot;       &quot; &quot;                    
-## 6  ( 1 )  &quot; &quot;                  &quot; &quot;       &quot; &quot;                    
-## 7  ( 1 )  &quot;*&quot;                  &quot; &quot;       &quot; &quot;                    
-## 8  ( 1 )  &quot;*&quot;                  &quot; &quot;       &quot; &quot;                    
-## 9  ( 1 )  &quot;*&quot;                  &quot; &quot;       &quot; &quot;                    
-## 10  ( 1 ) &quot;*&quot;                  &quot; &quot;       &quot; &quot;                    
-## 11  ( 1 ) &quot;*&quot;                  &quot; &quot;       &quot; &quot;                    
-## 12  ( 1 ) &quot;*&quot;                  &quot;*&quot;       &quot; &quot;                    
-## 13  ( 1 ) &quot;*&quot;                  &quot;*&quot;       &quot;*&quot;                    
-##           raceNatv Hawaii/Pacf Isl raceOther/Multiracial raceWhite
-## 1  ( 1 )  &quot; &quot;                      &quot; &quot;                   &quot; &quot;      
-## 2  ( 1 )  &quot; &quot;                      &quot; &quot;                   &quot; &quot;      
-## 3  ( 1 )  &quot; &quot;                      &quot; &quot;                   &quot; &quot;      
-## 4  ( 1 )  &quot; &quot;                      &quot; &quot;                   &quot; &quot;      
-## 5  ( 1 )  &quot; &quot;                      &quot; &quot;                   &quot; &quot;      
-## 6  ( 1 )  &quot; &quot;                      &quot; &quot;                   &quot; &quot;      
-## 7  ( 1 )  &quot; &quot;                      &quot; &quot;                   &quot; &quot;      
-## 8  ( 1 )  &quot; &quot;                      &quot; &quot;                   &quot; &quot;      
-## 9  ( 1 )  &quot;*&quot;                      &quot; &quot;                   &quot; &quot;      
-## 10  ( 1 ) &quot;*&quot;                      &quot; &quot;                   &quot;*&quot;      
-## 11  ( 1 ) &quot;*&quot;                      &quot;*&quot;                   &quot;*&quot;      
-## 12  ( 1 ) &quot;*&quot;                      &quot;*&quot;                   &quot;*&quot;      
-## 13  ( 1 ) &quot;*&quot;                      &quot;*&quot;                   &quot;*&quot;</code></pre>
 <blockquote>
 <p>Outliers</p>
 </blockquote>

@@ -362,14 +362,36 @@ colnames(fwd_all10) = "p_value"
 # Rank p-values
 fwd_all10 %>% mutate(rank = rank(p_value))
 
+# Enter first the one with the lowest p-value: maritalstatus
+forward10 = update(forward9, . ~ . + maritalstatus)
+
 ###########################################################
+
+# Step 11: Enter the one with the lowest p-value in the rest
+fwd_fit1 = update(forward10, . ~ . + icu_flag)
+fwd_fit2 = update(forward10, . ~ . + gender)
+fwd_fit3 = update(forward10, . ~ . + race)
+fwd_fit4 = update(forward10, . ~ . + religion)
+fwd_fit5 = update(forward10, . ~ . + bmi)
+fwd_fit6 = update(forward10, . ~ . + o2sat_cat)
+
+# Extract p-values from results
+fwd_all11 = rbind(min(tidy(fwd_fit1)$p.value[-1:-15]), min(tidy(fwd_fit2)$p.value[-1:-15]),
+                 min(tidy(fwd_fit3)$p.value[-1:-15]), min(tidy(fwd_fit4)$p.value[-1:-15]),
+                 min(tidy(fwd_fit5)$p.value[-1:-15]), min(tidy(fwd_fit6)$p.value[-1:-15])) %>% 
+  as.data.frame()
+
+colnames(fwd_all11) = "p_value"
+
+# Rank p-values
+fwd_all11 %>% mutate(rank = rank(p_value))
 ```
 
 ```{r print,echo=FALSE}
-tidy(forward9)
+tidy(forward10)
 ```
 
-In the Forward Elimination procedure (without applying `olsrr` package), we got a model: __log_length_of_stay ~ is30dayreadmit + cindex + evisit + age + insurancetype + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure__.
+In the Forward Elimination procedure (without applying `olsrr` package), we got a model: __log_length_of_stay ~ is30dayreadmit + cindex + evisit + age + insurancetype + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure + maritalstatus__.
 
 (Question) For variates with more than two levels, which p value of these levels should be chooses for comparing?
 
@@ -407,7 +429,7 @@ abline(0,1)
 plot(1:10, rs_bd$adjr2, xlab = "No of parameters", ylab = "Adj R2")
 ```
 
-```{r}
+```{r showresults,include=FALSE}
 # Backward
 rs_bd
 # Forward
