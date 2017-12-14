@@ -176,4 +176,39 @@ plot(model_sw_0.01)
 
 ```
 
+# backward selection for interaction
+
+```{r}
+interaction_full <-  lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + gender + maritalstatus + temperature_cat 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure + age*temperature_cat 
+                    + temperature_cat*heartrate_transformed
+                    + is30dayreadmit*age 
+                    + cindex*respirationrate_transformed  
+                    + cindex*age
+                    + mean_arterial_pressure*age, data= hos)
+summary(interaction_full)
+
+bwd_step1 = update(interaction_full, . ~ . -cindex:age)
+summary(bwd_step1)
+
+bwd_step2 = update(bwd_step1, . ~ . -cindex:respirationrate_transformed   )
+summary(bwd_step2)
+
+bwd_step3 = update(bwd_step2, . ~ . -temperature_cat:heartrate_transformed  )
+summary(bwd_step3)
+
+bwd_step4 = update(bwd_step3, . ~ . - age:temperature_cat )
+summary(bwd_step4)
+
+bwd_step5 = update(bwd_step4, . ~ . - is30dayreadmit:age  )
+summary(bwd_step5)
+
+#based on the results, none of the interaction term will be included in the model
+
+```
+
+
 
