@@ -19,12 +19,16 @@ data_bootstrap_no_outliers = read.csv("./data/data_no_outliers.csv") %>%
          is30dayreadmit,
          cindex,
          evisit,
+         icu_flag,
          age,
          gender,
+         religion,
          maritalstatus,
-         temperature_cat,
          insurancetype,
-         heartrate_transformed, 
+         bmi,
+         o2sat_cat,
+         temperature_cat,
+         heartrate_transformed,
          respirationrate_transformed,
          mean_arterial_pressure)
 
