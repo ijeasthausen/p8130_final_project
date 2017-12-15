@@ -244,6 +244,7 @@ detach(data_fwd)
 
 ### Stepwise Regression
 
+
 ### Criterion-Based Procedures
 
 ```{r criterion,eval=FALSE}
@@ -253,8 +254,7 @@ hos = read.csv("./data/cleaned_data_for_analyses.csv") %>%
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
 str(hos)
 
-# using criterion-based method
-
+# input models
 attach(hos)
 model_bw <- lm(log_length_of_stay ~ is30dayreadmit + evisit + age 
                + gender + maritalstatus + insurancetype + heartrate_transformed
@@ -301,7 +301,6 @@ criterion_sw_0.10 <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex
                     + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
 
 # make plots to show the value of criterion
-
 criterion_plot <- function(criterion, data, method){
   
   res_cri <- summary(criterion)
@@ -320,7 +319,6 @@ criterion_plot(criterion_sw_0.05, data= hos, method = "stepwise 0.05")
 criterion_plot(criterion_fw_new, data= hos, method = "forward elimination by hand")
  
 # make table to show the value of criterion
-
 best <- function(criterion) {
   
   subsets <- with(summary(criterion), cbind(p = as.numeric(rownames(which)),
@@ -350,7 +348,7 @@ criterion_result <- full_join(best(criterion_bw), best(criterion_fw))%>%
   full_join(.,best(criterion_fw_new))%>%
   select(p, rss, rsq, adjr2, cp, bic, everything())
 
-# ANOVA for nested model
+# ANOVA for comparing nested model
 anova(model_bw, model_sw_0.10)
 anova(model_fw_new, model_sw_0.10)
 anova(model_sw_0.05, model_sw_0.10)
@@ -390,16 +388,16 @@ anova(model_base, model_both_int)
 par(mfrow = c(1, 2))
 
 # Residuals vs fitted values plot
-
 plot(fitted(model_sw_0.10), resid(model_sw_0.10), xlab = "Predicted/Fitted value", ylab = "Residual")
 title("(a) Residual Plot for log_length_of_stay ")
 abline(0, 0)
 
 # Quantile - Quantile plot (QQ-plot)
-
 qqnorm(resid(model_sw_0.10), xlab = "Expected Value", ylab = "Residual", main = "")
 qqline(resid(model_sw_0.10))
 title("(a) QQ Plot for log_length_of_stay")
-
 plot(model_sw_0.10)
 ```
+
+### Model Building with SAS
+

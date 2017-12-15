@@ -619,8 +619,7 @@ hos = read.csv(&quot;./data/cleaned_data_for_analyses.csv&quot;) %&gt;%
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
 str(hos)
 
-# using criterion-based method
-
+# input models
 attach(hos)
 model_bw &lt;- lm(log_length_of_stay ~ is30dayreadmit + evisit + age 
                + gender + maritalstatus + insurancetype + heartrate_transformed
@@ -667,7 +666,6 @@ criterion_sw_0.10 &lt;- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex
                     + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
 
 # make plots to show the value of criterion
-
 criterion_plot &lt;- function(criterion, data, method){
   
   res_cri &lt;- summary(criterion)
@@ -686,7 +684,6 @@ criterion_plot(criterion_sw_0.05, data= hos, method = &quot;stepwise 0.05&quot;)
 criterion_plot(criterion_fw_new, data= hos, method = &quot;forward elimination by hand&quot;)
  
 # make table to show the value of criterion
-
 best &lt;- function(criterion) {
   
   subsets &lt;- with(summary(criterion), cbind(p = as.numeric(rownames(which)),
@@ -716,7 +713,7 @@ criterion_result &lt;- full_join(best(criterion_bw), best(criterion_fw))%&gt;%
   full_join(.,best(criterion_fw_new))%&gt;%
   select(p, rss, rsq, adjr2, cp, bic, everything())
 
-# ANOVA for nested model
+# ANOVA for comparing nested model
 anova(model_bw, model_sw_0.10)
 anova(model_fw_new, model_sw_0.10)
 anova(model_sw_0.05, model_sw_0.10)
@@ -756,18 +753,18 @@ anova(model_base, model_both_int)
 par(mfrow = c(1, 2))
 
 # Residuals vs fitted values plot
-
 plot(fitted(model_sw_0.10), resid(model_sw_0.10), xlab = &quot;Predicted/Fitted value&quot;, ylab = &quot;Residual&quot;)
 title(&quot;(a) Residual Plot for log_length_of_stay &quot;)
 abline(0, 0)
 
 # Quantile - Quantile plot (QQ-plot)
-
 qqnorm(resid(model_sw_0.10), xlab = &quot;Expected Value&quot;, ylab = &quot;Residual&quot;, main = &quot;&quot;)
 qqline(resid(model_sw_0.10))
 title(&quot;(a) QQ Plot for log_length_of_stay&quot;)
-
 plot(model_sw_0.10)</code></pre>
+</div>
+<div id="model-building-with-sas" class="section level3">
+<h3>Model Building with SAS</h3>
 </div>
 
 
