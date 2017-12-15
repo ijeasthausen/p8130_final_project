@@ -151,7 +151,9 @@ AIC(model_bw, model_fw_new, model_sw_0.05, model_sw_0.10)</code></pre>
 ## model_fw_new  16 6654.587
 ## model_sw_0.05 15 6657.052
 ## model_sw_0.10 17 6653.536</code></pre>
-<pre class="r"><code>criterion_bw &lt;- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
+<pre class="r"><code>##########this is the main function#######
+
+criterion_bw &lt;- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
                + gender + maritalstatus + insurancetype + heartrate_transformed
                + respirationrate_transformed+mean_arterial_pressure, data = hos,
                nvmax= 15, nbest = 1)
@@ -2389,69 +2391,307 @@ summary(bwd_step5)</code></pre>
   average &lt;- mean(x)
   median &lt;- median(x)
   sd &lt;- sd(x)
-  quantile_1st &lt;- quantile(x,probs= 0.25)
-  quantile_3nd &lt;- quantile(x,probs= 0.75)
+  quantile_1st &lt;- quantile(x,probs = 0.25)
+  quantile_3nd &lt;- quantile(x,probs = 0.75)
   minimum &lt;- min(x)
   maximum &lt;- max(x)
   result &lt;- data_frame(average,median,sd,quantile_1st,quantile_3nd , minimum,maximum)
   return(result)
 }
-colnames(hos)</code></pre>
-<pre><code>##  [1] &quot;log_length_of_stay&quot;          &quot;is30dayreadmit&quot;             
-##  [3] &quot;mews&quot;                        &quot;cindex&quot;                     
-##  [5] &quot;evisit&quot;                      &quot;icu_flag&quot;                   
-##  [7] &quot;age&quot;                         &quot;gender&quot;                     
-##  [9] &quot;race&quot;                        &quot;religion&quot;                   
-## [11] &quot;maritalstatus&quot;               &quot;insurancetype&quot;              
-## [13] &quot;bmi&quot;                         &quot;o2sat_cat&quot;                  
-## [15] &quot;temperature_cat&quot;             &quot;heartrate_transformed&quot;      
-## [17] &quot;respirationrate_transformed&quot; &quot;mean_arterial_pressure&quot;</code></pre>
-<pre class="r"><code>hos%&gt;%
+
+hos_summary%&gt;%
+  select(loshours, losdays2,evisit, age, bmi, o2sat, temperature, heartrate, respirationrate, mean_arterial_pressure  ) %&gt;%
+  map(.,statistics)%&gt;%
+  knitr::kable(.,format = &quot;latex&quot;, 
+               booktabs = TRUE) %&gt;% 
+  kableExtra::kable_styling(latex_options = &quot;scale_down&quot;)</code></pre>
+
+<pre class="r"><code>hos_no_outlier%&gt;%
   select(log_length_of_stay, evisit,  age, bmi, heartrate_transformed, respirationrate_transformed, mean_arterial_pressure )%&gt;%
   map(.,statistics)</code></pre>
 <pre><code>## $log_length_of_stay
 ## # A tibble: 1 x 7
-##    average   median        sd quantile_1st quantile_3nd   minimum  maximum
-##      &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
-## 1 1.313927 1.332806 0.8878587    0.7537718     1.903351 -3.178054 4.350815
+##    average   median       sd quantile_1st quantile_3nd   minimum  maximum
+##      &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+## 1 1.330479 1.343735 0.800749    0.7537718      1.89712 -1.232144 3.919495
 ## 
 ## $evisit
 ## # A tibble: 1 x 7
 ##    average median       sd quantile_1st quantile_3nd minimum maximum
 ##      &lt;dbl&gt;  &lt;int&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;   &lt;int&gt;   &lt;int&gt;
-## 1 1.732266      1 1.577792            0            3       0       4
+## 1 1.738086      1 1.581408            0            3       0       4
 ## 
 ## $age
 ## # A tibble: 1 x 7
 ##    average median       sd quantile_1st quantile_3nd minimum maximum
 ##      &lt;dbl&gt;  &lt;int&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;   &lt;int&gt;   &lt;int&gt;
-## 1 65.00909     67 18.64358           53           80      18     101
+## 1 65.16254     67 18.54834           53           80      18     101
 ## 
 ## $bmi
 ## # A tibble: 1 x 7
-##    average median      sd quantile_1st quantile_3nd minimum maximum
-##      &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-## 1 28.38032   27.1 8.06827         23.3         31.7     3.1  122.65
+##    average median       sd quantile_1st quantile_3nd minimum maximum
+##      &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1 28.36998   27.1 8.036875         23.3         31.7     3.1  122.65
 ## 
 ## $heartrate_transformed
 ## # A tibble: 1 x 7
-##        average      median          sd quantile_1st quantile_3nd
-##          &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
-## 1 0.0001674378 0.000158805 5.35453e-05 0.0001299998 0.0001977133
+##        average       median           sd quantile_1st quantile_3nd
+##          &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+## 1 0.0001676836 0.0001589522 5.376024e-05 0.0001300852 0.0001980289
 ## # ... with 2 more variables: minimum &lt;dbl&gt;, maximum &lt;dbl&gt;
 ## 
 ## $respirationrate_transformed
 ## # A tibble: 1 x 7
 ##       average      median           sd quantile_1st quantile_3nd
 ##         &lt;dbl&gt;       &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
-## 1 0.003124818 0.003173973 0.0005470416  0.002929376  0.003423495
+## 1 0.003125721 0.003178684 0.0005412413  0.002934028  0.003423495
 ## # ... with 2 more variables: minimum &lt;dbl&gt;, maximum &lt;dbl&gt;
 ## 
 ## $mean_arterial_pressure
 ## # A tibble: 1 x 7
-##    average  median       sd quantile_1st quantile_3nd  minimum  maximum
-##      &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
-## 1 140.2481 139.046 16.41101     128.8506     149.7332 90.89608 252.3481</code></pre>
+##    average median      sd quantile_1st quantile_3nd  minimum  maximum
+##      &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+## 1 140.2212    139 16.4197     128.8333     149.7068 90.89608 252.3481</code></pre>
+<pre class="r"><code>hos_no_outlier%&gt;%
+  select(log_length_of_stay, evisit,  age, bmi, heartrate_transformed, respirationrate_transformed, mean_arterial_pressure )%&gt;%
+  map(.,statistics)</code></pre>
+<pre><code>## $log_length_of_stay
+## # A tibble: 1 x 7
+##    average   median       sd quantile_1st quantile_3nd   minimum  maximum
+##      &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+## 1 1.330479 1.343735 0.800749    0.7537718      1.89712 -1.232144 3.919495
+## 
+## $evisit
+## # A tibble: 1 x 7
+##    average median       sd quantile_1st quantile_3nd minimum maximum
+##      &lt;dbl&gt;  &lt;int&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;   &lt;int&gt;   &lt;int&gt;
+## 1 1.738086      1 1.581408            0            3       0       4
+## 
+## $age
+## # A tibble: 1 x 7
+##    average median       sd quantile_1st quantile_3nd minimum maximum
+##      &lt;dbl&gt;  &lt;int&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;   &lt;int&gt;   &lt;int&gt;
+## 1 65.16254     67 18.54834           53           80      18     101
+## 
+## $bmi
+## # A tibble: 1 x 7
+##    average median       sd quantile_1st quantile_3nd minimum maximum
+##      &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1 28.36998   27.1 8.036875         23.3         31.7     3.1  122.65
+## 
+## $heartrate_transformed
+## # A tibble: 1 x 7
+##        average       median           sd quantile_1st quantile_3nd
+##          &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+## 1 0.0001676836 0.0001589522 5.376024e-05 0.0001300852 0.0001980289
+## # ... with 2 more variables: minimum &lt;dbl&gt;, maximum &lt;dbl&gt;
+## 
+## $respirationrate_transformed
+## # A tibble: 1 x 7
+##       average      median           sd quantile_1st quantile_3nd
+##         &lt;dbl&gt;       &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+## 1 0.003125721 0.003178684 0.0005412413  0.002934028  0.003423495
+## # ... with 2 more variables: minimum &lt;dbl&gt;, maximum &lt;dbl&gt;
+## 
+## $mean_arterial_pressure
+## # A tibble: 1 x 7
+##    average median      sd quantile_1st quantile_3nd  minimum  maximum
+##      &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+## 1 140.2212    139 16.4197     128.8333     149.7068 90.89608 252.3481</code></pre>
+<pre class="r"><code>hos%&gt;%
+  select(-log_length_of_stay, -evisit,  -age, -bmi, -heartrate_transformed, -respirationrate_transformed, -mean_arterial_pressure)%&gt;%
+  summary(.)</code></pre>
+<pre><code>##  is30dayreadmit                    mews           cindex     icu_flag
+##  0:2361         further deterioration: 831   mild    :1009   0:2697  
+##  1: 388         immediate action     : 246   moderate: 316   1:  52  
+##                 increase caution     :1206   normal  : 939           
+##                 normal               : 466   severe  : 485           
+##                                                                      
+##                                                                      
+##     gender                       race                religion   
+##  Female:1483   African Amer/Black  : 584   Christian     :1941  
+##  Male  :1266   Asian               : 180   Hindu         :  88  
+##                Native Amer/Alaskan :  19   Islam         :  85  
+##                Natv Hawaii/Pacf Isl:   4   Jewish        : 375  
+##                Other/Multiracial   : 403   No Affiliation: 143  
+##                White               :1559   Other         : 117  
+##      maritalstatus   insurancetype   o2sat_cat    temperature_cat
+##  Married    :1260   Medicaid: 133   low   : 185   high  : 186    
+##  Not Married:1489   Medicare:1076   normal:2564   low   :  92    
+##                     Private :1510                 normal:2471    
+##                     NA's    :  30                                
+##                                                                  
+## </code></pre>
+<pre class="r"><code>hos_no_outlier%&gt;%
+  select(-log_length_of_stay, -evisit,  -age, -bmi, -heartrate_transformed, -respirationrate_transformed, -mean_arterial_pressure)%&gt;%
+  summary(.)</code></pre>
+<pre><code>##     loshours         losdays2       is30dayreadmit
+##  Min.   :   7.0   Min.   : 0.2917   0:2327        
+##  1st Qu.:  51.0   1st Qu.: 2.1250   1: 380        
+##  Median :  92.0   Median : 3.8333                 
+##  Mean   : 125.1   Mean   : 5.2107                 
+##  3rd Qu.: 160.0   3rd Qu.: 6.6667                 
+##  Max.   :1209.0   Max.   :50.3750                 
+##                     mews           cindex    icu_flag    gender    
+##  further deterioration: 822   mild    :997   0:2655   Female:1467  
+##  immediate action     : 242   moderate:309   1:  52   Male  :1240  
+##  increase caution     :1185   normal  :924                         
+##  normal               : 458   severe  :477                         
+##                                                                    
+##                                                                    
+##                    race                religion        maritalstatus 
+##  African Amer/Black  : 574   Christian     :1909   Married    :1246  
+##  Asian               : 180   Hindu         :  87   Not Married:1461  
+##  Native Amer/Alaskan :  18   Islam         :  85                     
+##  Natv Hawaii/Pacf Isl:   3   Jewish        : 372                     
+##  Other/Multiracial   : 397   No Affiliation: 137                     
+##  White               :1535   Other         : 117                     
+##   insurancetype      o2sat         temperature      heartrate     
+##  Medicaid: 127   Min.   : 80.00   Min.   :30.00   Min.   : 37.58  
+##  Medicare:1067   1st Qu.: 96.52   1st Qu.:36.62   1st Qu.: 71.06  
+##  Private :1484   Median : 97.57   Median :36.73   Median : 79.32  
+##  NA's    :  29   Mean   : 97.90   Mean   :36.75   Mean   : 80.16  
+##                  3rd Qu.: 98.60   3rd Qu.:36.87   3rd Qu.: 87.68  
+##                  Max.   :236.53   Max.   :52.27   Max.   :242.58  
+##  respirationrate  o2sat_cat    temperature_cat   residuals       
+##  Min.   :13.47   low   : 182   high  : 180     Min.   :-2.44293  
+##  1st Qu.:17.09   normal:2525   low   :  90     1st Qu.:-0.55350  
+##  Median :17.74                 normal:2437     Median : 0.02515  
+##  Mean   :18.21                                 Mean   : 0.01958  
+##  3rd Qu.:18.46                                 3rd Qu.: 0.60829  
+##  Max.   :67.72                                 Max.   : 2.48610  
+##   outlier       
+##  Mode :logical  
+##  FALSE:2707     
+##                 
+##                 
+##                 
+## </code></pre>
+<pre class="r"><code>hos_outlier%&gt;%
+  select(-log_length_of_stay, -evisit,  -age, -bmi, -heartrate_transformed, -respirationrate_transformed, -mean_arterial_pressure)%&gt;%
+  summary(.)</code></pre>
+<pre><code>##     loshours          losdays2        is30dayreadmit
+##  Min.   :   1.00   Min.   : 0.04167   0:34          
+##  1st Qu.:   1.25   1st Qu.: 0.05208   1: 8          
+##  Median :  10.00   Median : 0.41667                 
+##  Mean   : 442.19   Mean   :18.42460                 
+##  3rd Qu.: 899.25   3rd Qu.:37.46875                 
+##  Max.   :1861.00   Max.   :77.54167                 
+##                     mews         cindex   icu_flag    gender  
+##  further deterioration: 9   mild    :12   0:42     Female:16  
+##  immediate action     : 4   moderate: 7            Male  :26  
+##  increase caution     :21   normal  :15                       
+##  normal               : 8   severe  : 8                       
+##                                                               
+##                                                               
+##                    race              religion      maritalstatus
+##  African Amer/Black  :10   Christian     :32   Married    :14   
+##  Native Amer/Alaskan : 1   Hindu         : 1   Not Married:28   
+##  Natv Hawaii/Pacf Isl: 1   Jewish        : 3                    
+##  Other/Multiracial   : 6   No Affiliation: 6                    
+##  White               :24                                        
+##                                                                 
+##   insurancetype     o2sat         temperature      heartrate     
+##  Medicaid: 6    Min.   : 94.45   Min.   :35.84   Min.   : 65.63  
+##  Medicare: 9    1st Qu.: 97.00   1st Qu.:36.59   1st Qu.: 75.92  
+##  Private :26    Median : 97.70   Median :36.75   Median : 82.13  
+##  NA's    : 1    Mean   : 98.24   Mean   :36.95   Mean   : 82.72  
+##                 3rd Qu.: 98.65   3rd Qu.:37.07   3rd Qu.: 89.63  
+##                 Max.   :120.44   Max.   :44.97   Max.   :100.89  
+##  respirationrate  o2sat_cat  temperature_cat   residuals     
+##  Min.   :12.00   low   : 3   high  : 6       Min.   :-6.219  
+##  1st Qu.:17.70   normal:39   low   : 2       1st Qu.:-4.455  
+##  Median :18.00               normal:34       Median :-2.611  
+##  Mean   :18.68                               Mean   :-1.267  
+##  3rd Qu.:19.03                               3rd Qu.: 2.759  
+##  Max.   :39.50                               Max.   : 3.905  
+##  outlier       
+##  Mode:logical  
+##  TRUE:42       
+##                
+##                
+##                
+## </code></pre>
+<pre class="r"><code>setwise_subset2 = lm(log_length_of_stay ~ cindex + evisit + age + gender +  maritalstatus + insurancetype + bmi  + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = hos_no_outlier)
+summary(setwise_subset2)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = log_length_of_stay ~ cindex + evisit + age + gender + 
+##     maritalstatus + insurancetype + bmi + temperature_cat + heartrate_transformed + 
+##     respirationrate_transformed + mean_arterial_pressure, data = hos_no_outlier)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -2.03406 -0.46973  0.00622  0.48016  2.00874 
+## 
+## Coefficients:
+##                               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                  2.714e+00  1.910e-01  14.208  &lt; 2e-16 ***
+## cindexmoderate               1.381e-01  4.808e-02   2.872  0.00411 ** 
+## cindexnormal                 1.779e-02  3.520e-02   0.505  0.61336    
+## cindexsevere                 1.768e-01  4.144e-02   4.265 2.06e-05 ***
+## evisit                       7.478e-02  9.192e-03   8.136 6.22e-16 ***
+## age                          9.308e-03  9.335e-04   9.971  &lt; 2e-16 ***
+## genderMale                   6.301e-02  2.949e-02   2.136  0.03274 *  
+## maritalstatusNot Married     8.730e-02  2.928e-02   2.981  0.00290 ** 
+## insurancetypeMedicare       -1.316e-01  7.201e-02  -1.828  0.06771 .  
+## insurancetypePrivate        -1.774e-01  6.828e-02  -2.598  0.00944 ** 
+## bmi                         -3.828e-03  1.802e-03  -2.124  0.03374 *  
+## temperature_catlow          -5.544e-02  9.565e-02  -0.580  0.56220    
+## temperature_catnormal       -2.399e-01  5.765e-02  -4.161 3.26e-05 ***
+## heartrate_transformed       -2.083e+03  2.743e+02  -7.596 4.20e-14 ***
+## respirationrate_transformed -1.887e+02  2.688e+01  -7.020 2.81e-12 ***
+## mean_arterial_pressure      -5.945e-03  8.813e-04  -6.745 1.87e-11 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.7307 on 2662 degrees of freedom
+##   (29 observations deleted due to missingness)
+## Multiple R-squared:  0.1737, Adjusted R-squared:  0.169 
+## F-statistic:  37.3 on 15 and 2662 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>summary(model_sw_0.10)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = log_length_of_stay ~ is30dayreadmit + cindex + evisit + 
+##     age + gender + maritalstatus + temperature_cat + insurancetype + 
+##     heartrate_transformed + respirationrate_transformed + mean_arterial_pressure)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -5.0461 -0.4696  0.0183  0.5054  3.1727 
+## 
+## Coefficients:
+##                               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                  2.623e+00  2.026e-01  12.944  &lt; 2e-16 ***
+## is30dayreadmit1              1.703e-01  4.749e-02   3.586 0.000341 ***
+## cindexmoderate               8.111e-02  5.345e-02   1.517 0.129277    
+## cindexnormal                 7.521e-03  3.910e-02   0.192 0.847480    
+## cindexsevere                 1.936e-01  4.612e-02   4.198 2.77e-05 ***
+## evisit                       6.761e-02  1.066e-02   6.341 2.66e-10 ***
+## age                          9.256e-03  1.026e-03   9.025  &lt; 2e-16 ***
+## genderMale                   5.711e-02  3.278e-02   1.742 0.081634 .  
+## maritalstatusNot Married     7.789e-02  3.257e-02   2.391 0.016853 *  
+## temperature_catlow          -9.679e-02  1.059e-01  -0.914 0.360915    
+## temperature_catnormal       -2.672e-01  6.371e-02  -4.194 2.83e-05 ***
+## insurancetypeMedicare       -1.702e-01  7.938e-02  -2.144 0.032088 *  
+## insurancetypePrivate        -2.389e-01  7.496e-02  -3.187 0.001453 ** 
+## heartrate_transformed       -1.984e+03  3.067e+02  -6.470 1.16e-10 ***
+## respirationrate_transformed -1.911e+02  2.954e+01  -6.470 1.16e-10 ***
+## mean_arterial_pressure      -5.659e-03  9.803e-04  -5.772 8.70e-09 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.8198 on 2703 degrees of freedom
+##   (30 observations deleted due to missingness)
+## Multiple R-squared:  0.1511, Adjusted R-squared:  0.1463 
+## F-statistic: 32.06 on 15 and 2703 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<div id="result-interpretation" class="section level1">
+<h1>Result interpretation</h1>
+<p>Initially, we get model (blablabla). Because this model violates the normalize assumption of the residual, we decided to remove outliers and refit another model. Compare the new model and the previous one, the new model loses the variable “is30dayreadmit” and have a new one “BMI”. Overall, the adjusted R-squared increases by 15.5% and residual standard error decreased by 10.9%. For the covariates that stay in both models, the predictor “insurancetypeMedicare” became insignificant and the predictor “genderMale” became significant. And coefficients of the predictors changed, especially for predictor “temperature_catlow”, which changed from -0.09679 to -0.05544. As for direction, all the predictors are consistent before and after.</p>
+</div>
+<div id="interpretaion-about-bootstrap" class="section level1">
+<h1>interpretaion about bootstrap</h1>
 </div>
 
 

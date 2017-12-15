@@ -2,7 +2,9 @@
 title: "code_Xinyan"
 author: "Xinyan Zheng"
 date: "December 10, 2017"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +13,10 @@ library(leaps)
 
 #load the data
 hos = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+
+hos_summary <- read.csv("./data/hospital_data_cleaned.csv") %>% 
   select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
 
@@ -233,9 +239,12 @@ statistics <-  function(x) {
   return(result)
 }
 
-hos%>%
-  select(log_length_of_stay, evisit,  age, bmi, heartrate_transformed, respirationrate_transformed, mean_arterial_pressure ) %>%
-  map(.,statistics)
+hos_summary%>%
+  select(loshours, losdays2,evisit, age, bmi, o2sat, temperature, heartrate, respirationrate, mean_arterial_pressure  ) %>%
+  map(.,statistics)%>%
+  knitr::kable(.,format = "latex", 
+               booktabs = TRUE) %>% 
+  kableExtra::kable_styling(latex_options = "scale_down")
 
 hos_no_outlier%>%
   select(log_length_of_stay, evisit,  age, bmi, heartrate_transformed, respirationrate_transformed, mean_arterial_pressure )%>%
