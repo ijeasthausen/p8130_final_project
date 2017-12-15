@@ -395,9 +395,7 @@ In the Forward Elimination procedure (without applying `olsrr` package), we got 
 
 (Question) For variates with more than two levels, which p value of these levels should be chooses for comparing?
 
-****
-
-> Criterion-based procedures
+### Criterion-based procedures
 
 ```{r criterion_forward,include=FALSE}
 hospital_fd = cleaned_data_for_analyses_nomews %>% 
@@ -436,7 +434,7 @@ rs_bd
 rs_fd
 ```
 
-> Bootstrap
+### Bootstrap
 
 ```{r}
 data_no_outliers = read_csv("./data/data_no_outliers.csv")
