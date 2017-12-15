@@ -87,11 +87,7 @@ Variables selected by all methods include: 30 day readmit, number of ER visits i
 
 The model selected via this process (model 1) included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, temperature, partner status, insurance type, heart rate, respiration rate, and mean arterial pressure. Model 1 residuals were heavy-tailed (figure XXX) with substantial kurtosis (6.5). Therefore, we conlcude that this model violates the assumption of residual normality and may have limited predictive power. 
 
-In order to improve residual normality, observations with outlier residual values (>2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. After outliers were removed from the data, backward, forwards, and stepwise variable processes all chose the following variables for inclusion in the model: c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables chosen by the forward selection process include: 30 day readmit, ICU, and religion. The backward process also included 30 day readmit, and the stepwise process did not select any additional variables. All three models performed similarly in model diagnostic criteria (table XXX). An ANOVA test to compare nested models was used to make all pairwise comparisons between candidate models. 
-
-
-
-
+In order to improve residual normality, observations with outlier residual values (> 2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. Models selected using the stepwise and backward processes were the same and included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables selected in the forward process include: ICU admission, religion, and oxygen saturation. All models performed similarly by diagnostic criteria (table XXX). The additional variables selected in the forward process significantly improved the model by ANOVA testing (F = 3.9807; p < 0.001). Model assuptions were asssesed by visual inspection of the appropriate plots. Residuals associated model selected by this process (model 2) were approximately normal (figure XXX), uncorrelated with the fitted  
 
 
 
