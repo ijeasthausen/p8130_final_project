@@ -1,0 +1,33 @@
+---
+title: "model_selection_summary_table"
+author: "Imaani Easthausen, Shanshan Song, Huijuan Zhang, Xinyan Zheng"
+date: "December 9, 2017"
+output: pdf_document
+fontsize: 11pt 
+geometry: margin=1in
+---
+
+```{r model_selection_summary_table, echo=FALSE, message=FALSE, warning=FALSE}
+library(kableExtra)
+library(tidyverse)
+# with outliers
+bw_out = data.frame(model = "backward w/ outliers", rss = 1843.660, rsq = 0.1384, adjr2 = 0.1352, cp = 11.0, aic = 6683.825, bic = -317.9817)
+sw_0.05_out = data.frame(model = "stepwise (p=0.05) w/outliers", rss = 1821.571, rsq = 0.1487, adjr2 = 0.1446, cp = 14.0000, aic = 6657.052, bic = -327.0307)
+sw_0.10_out = data.frame(model = "stepwise (p=0.10) w/outliers", rss = 1816.543, rsq = 0.1511, adjr2 = 0.1463, cp = 16.0000, aic = 6653.536, bic = -318.7303)
+fw_new_out = data.frame(model = "forward w/outliers",rss = 1818.582, rsq = 0.1501, adjr2 = 0.1457, cp = 15.0000, aic = 6654.587, bic = -323.5877)
+# without outliers
+bw_no_out = data.frame(model = "backward w/o outliers", rss = 1425, adjr2 = 0.173, cp = 26.2, aic = 1013, bic = -1693)
+sw_0.05_no_out = data.frame(model = "stepwise (p=0.05) w/o outliers", rss = 1425, adjr2 = 0.173, cp = 26.2, aic = 1013, bic = -1693)
+fw_new_no_out = data.frame(model = "forward w/o outliers", rss = 1417, adjr2 = 0.175, cp = 26.3, aic = 1013, bic = -1693)
+# model statistics w/ and w/o outliers in a table
+model_outliers = rbind(bw_out, sw_0.05_out, sw_0.10_out, fw_new_out)
+model_no_outliers = rbind(bw_no_out, sw_0.05_no_out, fw_new_no_out)
+model_stat = rbind(model_outliers %>% select(-rsq), model_no_outliers)
+knitr::kable(model_stat, format = "latex", 
+      caption = "Diagnostic Tables from Criterion", 
+      booktabs = T) %>% 
+  group_rows("With Outliers", 1, 2, latex_gap_space = "1em") %>% 
+  group_rows("Without Outliers", 5, 6, latex_gap_space = "1em") %>% 
+  kable_styling(latex_options = "scale_down")
+
+```
