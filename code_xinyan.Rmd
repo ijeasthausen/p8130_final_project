@@ -161,18 +161,17 @@ anova(model_base, model_both_int)
 
 par(mfrow = c(1, 2))
 # Residuals vs fitted values plot
-plot(fitted(model_sw_0.01), resid(model_sw_0.01), xlab = "Predicted/Fitted value", ylab = "Residual")
+plot(fitted(model_sw_0.10), resid(model_sw_0.10), xlab = "Predicted/Fitted value", ylab = "Residual")
 title("(a) Residual Plot for log_length_of_stay ")
 abline(0, 0)
 
 # Quantile - Quantile plot (QQ-plot)
 
-qqnorm(resid(model_sw_0.01), xlab = "Expected Value", ylab = "Residual", main = "")
-qqline(resid(model_sw_0.01))
+qqnorm(resid(model_sw_0.10), xlab = "Expected Value", ylab = "Residual", main = "")
+qqline(resid(model_sw_0.10))
 title("(a) QQ Plot for log_length_of_stay")
 
-plot(model_sw_0.01)
-
+plot(model_sw_0.10)
 
 ```
 
@@ -210,5 +209,24 @@ summary(bwd_step5)
 
 ```
 
+#generating the statistics
+```{r}
+statistics <-  function(x) {
+  average <- mean(x)
+  median <- median(x)
+  sd <- sd(x)
+  quantile_1st <- quantile(x,probs= 0.25)
+  quantile_3nd <- quantile(x,probs= 0.75)
+  minimum <- min(x)
+  maximum <- max(x)
+  result <- data_frame(average,median,sd,quantile_1st,quantile_3nd , minimum,maximum)
+  return(result)
+}
+colnames(hos)
 
+hos%>%
+  select(log_length_of_stay, evisit,  age, bmi, heartrate_transformed, respirationrate_transformed, mean_arterial_pressure )%>%
+  map(.,statistics)
+
+```
 
