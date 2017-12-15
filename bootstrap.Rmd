@@ -2,15 +2,33 @@
 title: "Bootstrap"
 date: "12/10/2017"
 output: pdf_document
+fontsize: 11pt 
+geometry: margin=1in
 ---
   
-```{r bootstrap}
+```{r bootstrap_prep, include=FALSE}
 # lib
 library(tidyverse)
 library(boot)
 
 # load the data
-data_bootstrap = read.csv("./data/data_no_outliers.csv") %>% 
+data_bootstrap_no_outliers = read.csv("./data/data_no_outliers.csv") %>% 
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag)) %>% 
+  select(log_length_of_stay,
+         is30dayreadmit,
+         cindex,
+         evisit,
+         age,
+         gender,
+         maritalstatus,
+         temperature_cat,
+         insurancetype,
+         heartrate_transformed, 
+         respirationrate_transformed,
+         mean_arterial_pressure)
+
+data_bootstrap_with_outliers = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
   select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag)) %>% 
   select(log_length_of_stay,
@@ -27,38 +45,75 @@ data_bootstrap = read.csv("./data/data_no_outliers.csv") %>%
          mean_arterial_pressure)
   
 # final model
-# model_sw_0.10 = lm(log_length_of_stay ~ is30dayreadmit + cindex 
-#                       + evisit + age + gender + maritalstatus + temperature_cat 
-#                       + insurancetype + heartrate_transformed 
-#                       + respirationrate_transformed 
-#                       + mean_arterial_pressure)
+# model_sw_0.10_no_outlieres = lm(log_length_of_stay ~ is30dayreadmit + cindex
+#                       + evisit + age + gender + maritalstatus +
+#                      temperature_cat
+#                       + insurancetype + heartrate_transformed
+#                       + respirationrate_transformed
+#                       + mean_arterial_pressure, 
+#                    data = data_bootstrap_no_outliers)
 
 # bootstrap to obtain the distribution
 
 # code 1: raw code
-# boot_res1 = 
-#   data_bootstrap %>% 
-#   modelr::bootstrap(n = 10000) %>% 
+# boot_res1 =
+#   data_bootstrap %>%
+#   modelr::bootstrap(n = 10000) %>%
 #   mutate(models = map(strap, ~lm(log_length_of_stay ~ ., data = .x) ),
-#          results = map(models, broom::tidy)) %>% 
-#   select(-strap, -models) %>% 
-#   unnest() %>% 
-#   select(id = `.id`, term, estimate) %>% 
+#          results = map(models, broom::tidy)) %>%
+#   select(-strap, -models) %>%
+#   unnest() %>%
+#   select(id = `.id`, term, estimate) %>%
 #   spread(key = term, value = estimate)
 
 # code 2: boot function
 boot.fn = function(data, index){
   return(coef(lm(log_length_of_stay ~ ., data = data, subset = index)))
 }
-boot_res2 = boot(data_bootstrap, boot.fn, 10000)
-# table for bootstrapping results
-broom::tidy(boot_res2) %>% 
+boot_res2_no_outliers = boot(data_bootstrap_no_outliers, boot.fn, 10000)
+boot_res2_with_outliers = boot(data_bootstrap_with_outliers, boot.fn, 10000)
+## MSE
+bootstrap_mse_no_outliers = mean((boot_res2_no_outliers$t-boot_res2_no_outliers$t0)^2)
+bootstrap_mse_with_outliers =
+mean((boot_res2_with_outliers$t-boot_res2_with_outliers$t0)^2)
+```
+
+```{r bootstrap_results, echo=FALSE, message=FALSE, warning=FALSE}
+## table for bootstrapping results
+bootstrap_tb_no_outliers = rbind(
+  broom::tidy(boot_res2_no_outliers), 
+  data.frame(term = "MSE", statistic = bootstrap_mse_no_outliers, bias = 0, std.error = 0))
+
+bootstrap_tb_with_outliers = rbind(
+  broom::tidy(boot_res2_with_outliers), 
+  data.frame(term = "MSE", statistic = bootstrap_mse_with_outliers, bias = 0, std.error = 0))
+
+merge(bootstrap_tb_no_outliers, bootstrap_tb_with_outliers, by = "term") %>%
   knitr::kable(format = "latex", 
-               caption = "Bootstrap",
+               caption = "Bootstrap Results",
+               booktabs = TRUE) %>% 
+  kableExtra::kable_styling(latex_options = "scale_down") %>% 
+  kableExtra::row_spec(2, bold = T, color = "red") %>%
+  kableExtra::add_header_above(c(" " = 1, "Without Outliers" = 3, "With Outliers" = 3)) 
+# plot 
+plot(boot_res2_no_outliers, main = "Without Outliers")
+plot(boot_res2_with_outliers, main = "With Outliers")
+# CI
+rbind(
+  boot.ci(boot.out = boot_res2_no_outliers, type = c("norm", "basic"))$basic %>% 
+    as.tibble() %>% .[-2] %>% .[-2] %>% 
+    add_column(term = "without outliers") %>% 
+    add_column(mse = bootstrap_mse_no_outliers) %>% 
+    rename(lower = Var.2, upper = Var.3),
+  boot.ci(boot.out = boot_res2_with_outliers, type = c("norm", "basic"))$basic %>% 
+    as.tibble() %>% .[-2] %>% .[-2] %>% 
+    add_column(term = "with outliers") %>% 
+    add_column(mse = bootstrap_mse_with_outliers) %>% 
+    rename(lower = Var.2, upper = Var.3)) %>% 
+  select(term, mse, conf, lower, upper) %>% 
+  knitr::kable(format = "latex", 
+               caption = "Bootstrap MSE and CI",
                booktabs = TRUE) %>% 
   kableExtra::kable_styling(latex_options = "scale_down")
-# plot 
-plot(boot_res2)
-# CI
-boot.ci(boot.out = boot_res2, type = c("norm", "basic"))
+  
 ```
