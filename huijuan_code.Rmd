@@ -436,4 +436,17 @@ rs_bd
 rs_fd
 ```
 
-> Outliers
+> Bootstrap
+
+```{r}
+data_no_outliers = read_csv("./data/data_no_outliers.csv")
+boot.fn<-function(data, index){
+	return(coef(lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + gender + maritalstatus + temperature_cat 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure,data=data,subset=index)))
+}
+
+boot(data_no_outliers, boot.fn, 10000)
+```
