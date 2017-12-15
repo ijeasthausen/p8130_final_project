@@ -69,19 +69,20 @@ hospital_data_cleaned %>%
 *Table 2*: Correlations between continuous covariates. 
 
 ##Variable Selection and Model Building
-
 Variable selection was conducted using backward, forwards, and stepwise methods. Effect significance level of $alpha$ = 0.05 was required for a variable to stay in or enter the model for all variable selection processes. 
 
-Variables selected by all methods include: 30 day readmit, number of ER visits in last six months, age, insurance type, heart rate, respiration rate, and mean arterial pressure. Additional variables selected using forward selection include: c-index, temperature, and partner status. Additional variables selected using backward selection include: gender and partner status. Additional varaibles choosen by stepwise selection include: c-index, temperature, and heart rate. The models selected by the forward and stepwise processes performed better that the model selected by the backwards variable selection process based on model diagnotic criteria including residual sum of squares, adjusted R-squared, BIC, and AIC (table 2). Diagnostic criteria for models selected in the forward and stepwise processes were similar to one another (table 2). Since the model selected in the stepwise process was a subset of the model selected in the forward process with only one less variable (marital status), we conducted an ANOVA test to compare nested models. Based on the results of the ANOVA test, we concluded that the addition of marital status significantly improved the predictive capability of the model (F = 4.4441; p = 0.035). 
+Variables selected by all methods include: 30 day readmit, number of ER visits in last six months, age, insurance type, heart rate, respiration rate, and mean arterial pressure. Additional variables selected using forward selection include: c-index, temperature, and partner status. Additional variables selected using backward selection include: gender and partner status. Additional varaibles choosen by stepwise selection include: c-index, temperature, and heart rate. The models selected by the forward and stepwise processes performed better that the model selected by the backwards variable selection process based on model diagnotic criteria including residual sum of squares, adjusted R-squared, BIC, and AIC (table 3). Diagnostic criteria for models selected in the forward and stepwise processes were similar to one another (table 3). Since the model selected in the stepwise process was a subset of the model selected in the forward process with only one less variable (marital status), we conducted an ANOVA test to compare nested models. Based on the results of the ANOVA test, we concluded that the addition of marital status significantly improved the predictive capability of the model (F = 4.4441; p = 0.035). 
 
 
-In order to improve residual normality, observations with outlier residual values (> 2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. Models selected using the stepwise and backward processes were the same and included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables selected in the forward process include: ICU admission, religion, and oxygen saturation. All models performed similarly by diagnostic criteria (table 2). The additional variables selected in the forward process significantly improved the model by ANOVA testing (F = 3.9807; p < 0.001). Assumptions for this model (Model 2) were asssesed by visual inspection of the appropriate plots; residuals associated with model 2 were approximately normal, uncorrelated with the fitted outcome values, and no influential points were identified by Cook's Distance.  
+In order to improve residual normality, observations with outlier residual values (> 2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. Models selected using the stepwise and backward processes were the same and included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables selected in the forward process include: ICU admission, religion, and oxygen saturation. All models performed similarly by diagnostic criteria (table 3). The additional variables selected in the forward process significantly improved the model by ANOVA testing (F = 3.9807; p < 0.001). Assumptions for this model (Model 2) were asssesed by visual inspection of the appropriate plots; residuals associated with model 2 were approximately normal, uncorrelated with the fitted outcome values, and no influential points were identified by Cook's Distance.  
 
-[*Table 2*: Model diagnostics for models fit with and without outlier data. ](transform_fig/diagnostics_tables_criterion.jpg) 
+![](/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/transform_fig/diagnostics_tables_criterion.jpg)
+*Table 3*: Diagnostic criteria for models with and without outlier data.
+
 
 
 #Results
-In table 3, we present a prediction model for length of stay. The model explains 17.5% of the variability in length of stay. Bootstrapping was used to assess interal validity, and good internal validity was observed. 
+In table 4, we present a prediction model for length of stay. The model explains 17.5% of the variability in length of stay. Bootstrapping was used to assess interal validity, and good internal validity was observed. 
 
 ```{r echo=FALSE}
 forward_subset2 = lm(log_length_of_stay ~ is30dayreadmit + cindex + evisit + icu_flag + age + gender + religion +  maritalstatus + insurancetype + bmi + o2sat_cat + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = data_no_outliers)
@@ -91,12 +92,14 @@ broom::tidy(forward_subset2) %>%
                booktabs = TRUE) %>% 
   kableExtra::kable_styling(latex_options = "scale_down")
 ```
-*Table 3*: Prediction model for length of stay. 
+*Table 4*: Prediction model for length of stay. 
 
 #Discussion 
 Because outlier data were removed in order to develop the final model, we urge extreme caution in using this model to make predictions. While this model is likely to have some predictive capability for specific types of patients, the model cannot be generalized to patients whose characteristics differ substantially from the patients used in the sample to develop the model.
 
-Additional work will be needed in order to develop models with better predictive capability and increased generalizability. These variables may not be the best variables to predict hospital length of stay. It's possible that 
+Additional work will be needed in order to develop models with better predictive capability and increased generalizability. Different modeling methods such as generalized linear models may provide more robust prediction models. 
+
+Further, these variables may not be the best variables to predict hospital length of stay. It's possible that there are other variables that need to be explored in order to better understand characteristics that predict length of stay.
 
 
 
