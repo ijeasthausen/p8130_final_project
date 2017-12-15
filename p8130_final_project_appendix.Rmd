@@ -1,7 +1,6 @@
 ---
-title: "p8130 Final Project -- Appendix"
+title: "Programming in R"
 author: "Imaani Easthausen, Shanshan Song, Huijuan Zhang, Xinyan Zheng"
-date: "December 9, 2017"
 output: html_document
 fontsize: 11pt 
 geometry: margin=1in
@@ -25,13 +24,11 @@ library(plyr)
 library(leaps) # Criterion-based Procedures
 ```
 
-```{r budesliga}
+```{r exploratory data analysis, eval=FALSE}
 f.ref <- function(x) {
   stringr::str_extract(table_nums(x), "[^:]*")
 }
-```
 
-```{r exploratory data analysis, include = FALSE}
 hospital_data_cleaned = read_csv("data/hospital_data_cleaned.csv")
 
 hist_outcome_not_transformed = hospital_data_cleaned %>%
@@ -44,7 +41,6 @@ hist_outcome_transformed = hospital_data_cleaned %>%
   geom_histogram() +
   labs(title = "LOS with Log Transformation", x = "Length of Stay (log(days))")
 
-
 continuous_predictors_no_transformations = hospital_data_cleaned %>%
   mutate(log_respirationrate = (1/(respirationrate^2))) %>%
   mutate(heartrate_transformed = (1/heartrate^2)) %>%
@@ -52,9 +48,6 @@ continuous_predictors_no_transformations = hospital_data_cleaned %>%
 
 continuous_predictors_w_transformations = hospital_data_cleaned %>%
   select(log_length_of_stay, respirationrate_transformed, heartrate_transformed, bmi)
-```
-
-```{r echo=FALSE, message=FALSE}
 
 hist_outcome_transformed
 
@@ -242,9 +235,6 @@ summary(fwd_fit)
 detach(data_fwd)
 ```
 
-### Stepwise Regression
-
-
 ### Criterion-Based Procedures
 
 ```{r criterion,eval=FALSE}
@@ -398,6 +388,3 @@ qqline(resid(model_sw_0.10))
 title("(a) QQ Plot for log_length_of_stay")
 plot(model_sw_0.10)
 ```
-
-### Model Building with SAS
-
