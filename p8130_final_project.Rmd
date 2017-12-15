@@ -3,8 +3,6 @@ title: "p8130 Final Project"
 author: "Imaani Easthausen, Shanshan Song, Huijuan Zhang, Xinyan Zheng"
 date: "December 9, 2017"
 output: pdf_document
-sansfont: Calibri Light
-
 ---
 
 ```{r setup, include=FALSE}
@@ -59,7 +57,7 @@ After these adjustments were made, all continuous variables appeared to have app
 
 All pairs of continuous predictors were examined for collinearity by calculating all pairwise correlations. There did not appear to be substantial collinearity between any predictors (table 1). 
 
-```{r}
+```{r echo=FALSE}
 hospital_data_cleaned %>%
   select('Age' = age, 'Respiration Rate' = respirationrate_transformed, 'Mean Arterial Pressure' = mean_arterial_pressure, 'Heart Rate' = heartrate_transformed, "BMI" = bmi) %>%
   cor() %>%
@@ -78,8 +76,8 @@ Variables selected by all methods include: 30 day readmit, number of ER visits i
 
 In order to improve residual normality, observations with outlier residual values (> 2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. Models selected using the stepwise and backward processes were the same and included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables selected in the forward process include: ICU admission, religion, and oxygen saturation. All models performed similarly by diagnostic criteria (table XXX). The additional variables selected in the forward process significantly improved the model by ANOVA testing (F = 3.9807; p < 0.001). Assumptions for this model (Model 2) were asssesed by visual inspection of the appropriate plots; residuals associated with model 2 were approximately normal, uncorrelated with the fitted outcome values, and no influential points were identified by Cook's Distance.  
 
-#Results
-```{r}
+#Results and Conclusions
+```{r echo=FALSE}
 forward_subset2 = lm(log_length_of_stay ~ is30dayreadmit + cindex + evisit + icu_flag + age + gender + religion +  maritalstatus + insurancetype + bmi + o2sat_cat + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = data_no_outliers)
 
 broom::tidy(forward_subset2) %>%
@@ -87,8 +85,7 @@ broom::tidy(forward_subset2) %>%
                booktabs = TRUE) %>% 
   kableExtra::kable_styling(latex_options = "scale_down")
 ```
-In table XXX, we present a prediction model for length of stay. 
-
+In table XXX, we present a prediction model for length of stay. The model explains 17.5% of the variability in length of stay. Bootstrapping was used to assess interal validity. 
 
 
 
