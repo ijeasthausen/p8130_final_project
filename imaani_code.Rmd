@@ -142,8 +142,21 @@ data_no_outliers = hospital_data_cleaned_w_residuals %>%
   mutate(outlier = is.outlier(residuals, outlier))%>%
   filter(outlier == FALSE)
 
-forward_subset2 = lm(log_length_of_stay ~ cindex + evisit + icu_flag + age + gender + religion +  maritalstatus + insurancetype + bmi + o2sat_cat + temperature_transformed + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = data_no_outliers)
+forward_subset2 = lm(log_length_of_stay ~ is30dayreadmit + cindex + evisit + icu_flag + age + gender + religion +  maritalstatus + insurancetype + bmi + o2sat_cat + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = data_no_outliers)
 
+summary(forward_subset2)
+
+setwise_subset2 = lm(log_length_of_stay ~ cindex + evisit + age + gender +  maritalstatus + insurancetype + bmi  + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = data_no_outliers)
+
+anova(forward_subset2, setwise_subset2)
+
+plot(forward_subset2)
+
+rstandard(forward_subset2) %>%
+  skewness()
+
+rstandard(forward_subset2) %>%
+  kurtosis()
 
 
 
