@@ -1,0 +1,60 @@
+---
+title: "p8130 Final Project -- Appendix"
+author: "Imaani Easthausen, Shanshan Song, Huijuan Zhang, Xinyan Zheng"
+date: "December 9, 2017"
+output: pdf_document
+fontsize: 11pt 
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(tidyverse)
+library(janitor)
+library(readxl)
+library(stringr)
+library(readr)
+library(gridExtra)
+hospital_data_cleaned = read_csv("data/hospital_data_cleaned.csv")
+```
+
+```{r budesliga}
+f.ref <- function(x) {
+  stringr::str_extract(table_nums(x), "[^:]*")
+}
+```
+
+```{r exploratory data analysis, include = FALSE}
+hist_outcome_not_transformed = hospital_data_cleaned %>%
+  ggplot(aes(x = losdays2)) +
+  geom_histogram() +
+  labs(title = "LOS without Transformation", x = "Length of Stay (days)")
+
+hist_outcome_transformed = hospital_data_cleaned %>%
+  ggplot(aes(x = log_length_of_stay)) +
+  geom_histogram() +
+  labs(title = "LOS with Log Transformation", x = "Length of Stay (log(days))")
+
+
+continuous_predictors_no_transformations = hospital_data_cleaned %>%
+  mutate(log_respirationrate = (1/(respirationrate^2))) %>%
+  mutate(heartrate_transformed = (1/heartrate^2)) %>%
+  select(log_length_of_stay, age, respirationrate, mean_arterial_pressure, o2sat, temperature, heartrate, bmi)
+
+continuous_predictors_w_transformations = hospital_data_cleaned %>%
+  select(log_length_of_stay, respirationrate_transformed, heartrate_transformed, bmi)
+```
+
+
+```{r echo=FALSE, message=FALSE}
+
+hist_outcome_transformed
+
+p1 = pairs(continuous_predictors_w_transformations, panel = panel.smooth)
+
+hospital_data_cleaned %>%
+  select(age, respirationrate_transformed, mean_arterial_pressure, heartrate_transformed, bmi) %>%
+  cor() %>%
+  kable()
+```
