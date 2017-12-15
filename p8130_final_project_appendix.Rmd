@@ -2,10 +2,12 @@
 title: "p8130 Final Project -- Appendix"
 author: "Imaani Easthausen, Shanshan Song, Huijuan Zhang, Xinyan Zheng"
 date: "December 9, 2017"
-output: pdf_document
+output: html_document
 fontsize: 11pt 
 geometry: margin=1in
 ---
+
+### Preliminary Analyses
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -16,7 +18,11 @@ library(readxl)
 library(stringr)
 library(readr)
 library(gridExtra)
-hospital_data_cleaned = read_csv("data/hospital_data_cleaned.csv")
+
+library(broom)
+library(plyr)
+
+library(leaps) # Criterion-based Procedures
 ```
 
 ```{r budesliga}
@@ -26,6 +32,8 @@ f.ref <- function(x) {
 ```
 
 ```{r exploratory data analysis, include = FALSE}
+hospital_data_cleaned = read_csv("data/hospital_data_cleaned.csv")
+
 hist_outcome_not_transformed = hospital_data_cleaned %>%
   ggplot(aes(x = losdays2)) +
   geom_histogram() +
@@ -46,7 +54,6 @@ continuous_predictors_w_transformations = hospital_data_cleaned %>%
   select(log_length_of_stay, respirationrate_transformed, heartrate_transformed, bmi)
 ```
 
-
 ```{r echo=FALSE, message=FALSE}
 
 hist_outcome_transformed
@@ -58,3 +65,339 @@ hospital_data_cleaned %>%
   cor() %>%
   kable()
 ```
+
+### Variable Selection and Model Building
+
+#### Backward Elimination
+
+```{r backward,message=FALSE, warning=FALSE}
+# Read Data
+data_bwd = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+
+# fit - start with all predictors in the model
+bwd_fit_full = lm(log_length_of_stay ~ ., data = data_bwd)
+
+# remove the predictor with highest p-value
+# refit the model and move on
+# stop when all p-values <= alpha_crit (p-to-remove) = 0.05
+
+# step 1: no race
+bwd_step1 = update(bwd_fit_full, . ~ . -race)
+step1_pvalue = tidy(bwd_step1) %>% select(term, p.value)
+
+# step 2: no cindex
+bwd_step2 = update(bwd_step1, . ~ . -cindex)
+step2_pvalue = tidy(bwd_step2) %>% select(term, p.value)
+
+# step 3: no mews
+bwd_step3 = update(bwd_step2, . ~ . -mews)
+step3_pvalue = tidy(bwd_step3) %>% select(term, p.value)
+
+# step 4: no religion
+bwd_step4 = update(bwd_step3, . ~ . -religion)
+step4_pvalue = tidy(bwd_step4) %>% select(term, p.value)
+
+# step 5: no o2sat_cat
+bwd_step5 = update(bwd_step4, . ~ . -o2sat_cat)
+step5_pvalue = tidy(bwd_step5) %>% select(term, p.value)
+
+# step 6: no icu_flag
+bwd_step6 = update(bwd_step5, . ~ . -icu_flag)
+step6_pvalue = tidy(bwd_step6) %>% select(term, p.value)
+
+# step 7: no temperature_cat
+bwd_step7 = update(bwd_step6, . ~ . -temperature_cat)
+step7_pvalue = tidy(bwd_step7) %>% select(term, p.value)
+
+# step 8: no bmi
+bwd_step8 = update(bwd_step7, . ~ . -bmi)
+step8_pvalue = tidy(bwd_step8) %>% select(term, p.value)
+
+# combine pvalues each step into a table
+for (i in 1:8){
+  if (i == 1){
+    step_pvalue = step1_pvalue %>% rename(c("p.value" = "pvalue_step1"))
+    next}
+  loop_name = paste0("step",i,"_pvalue",sep = "")
+  step_pvalue = merge(step_pvalue, eval(parse(text = loop_name)), all = TRUE, by = "term") %>% 
+    rename(c("p.value" = paste0("pvalue_step",i)))
+}
+
+#################### Results ####################
+
+# summary of model from backward elimination
+bwd_step8 %>% summary() 
+```
+
+#### Forward Elimination
+
+```{r forward,warning=FALSE}
+# Read data
+data_fwd = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+
+fit_fwd = lm(formula = log_length_of_stay ~ is30dayreadmit + evisit + age  + insurancetype + heartrate_transformed +respirationrate_transformed + mean_arterial_pressure + race, data = data_fwd)
+
+# - start with no variables in the model
+# - check predictors' p-values if added to model, choose the lowest p-value <= alpha_crit (= 0.05)
+# - continue until no predictor can be added
+
+attach(data_fwd)
+
+# step 1, exam p.values for each of log_length_of_stay ~ predictor
+
+fwd_1 = sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ x))$p.value)
+fwd_p1 = plyr::ldply(fwd_1, rbind)[,-2]
+
+# step 2, add age, log_length_of_stay ~ age + predictor
+fwd_2 = sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + x))$p.value)
+fwd_p2 = plyr::ldply(fwd_2, rbind)[,-(2:3)]
+
+# step 3, add evisit, log_length_of_stay ~ age + evisit + predictor
+fwd_3 = sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + x))$p.value)
+fwd_p3 = plyr::ldply(fwd_3, rbind)[,-(2:4)]
+
+# step 4, add respirationrate_transformed, log_length_of_stay ~ age + evisit + respirationrate_transformed + predictor
+fwd_4 = sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + respirationrate_transformed + x))$p.value)
+fwd_p4 = plyr::ldply(fwd_4, rbind)[,-(2:5)]
+
+# step 5, add heartrate_transformed, log_length_of_stay ~ age + evisit + 
+# respirationrate_transformed + heartrate_transformed + predictor
+fwd_5 = sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + respirationrate_transformed + heartrate_transformed + x))$p.value)
+fwd_p5 = plyr::ldply(fwd_5, rbind)[,-(2:6)]
+
+# step 6, add mean_arterial_pressure, log_length_of_stay ~ age + evisit + 
+# respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + predictor
+fwd_6 = 
+sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + 
+respirationrate_transformed + 
+heartrate_transformed + 
+mean_arterial_pressure + x))$p.value) 
+fwd_p6 = plyr::ldply(fwd_6, rbind)[,-(2:7)]
+
+# step 7, add cindex, log_length_of_stay ~ age + evisit + 
+# respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + cindex + predictor
+fwd_7 = 
+sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + 
+respirationrate_transformed + 
+heartrate_transformed + 
+mean_arterial_pressure + 
+cindex + x))$p.value) 
+fwd_p7 = plyr::ldply(fwd_7, rbind)[,-(2:10)]
+
+# step 8, add temperature_cat, log_length_of_stay ~ age + evisit + 
+# respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + cindex + temperature_cat+ predictor
+fwd_8 = 
+  sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + 
+                                         respirationrate_transformed + 
+                                         heartrate_transformed + 
+                                         mean_arterial_pressure + 
+                                         cindex + temperature_cat + x))$p.value) 
+fwd_p8 = plyr::ldply(fwd_8, rbind)[,-(2:12)]
+
+# step 9, add is30dayreadmit, log_length_of_stay ~ age + evisit + 
+# respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + cindex + temperature_cat + 
+# is30dayreadmit +predictor
+fwd_9 = 
+  sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + 
+                                         respirationrate_transformed + 
+                                         heartrate_transformed + 
+                                         mean_arterial_pressure + 
+                                         cindex + temperature_cat + is30dayreadmit + x))$p.value) 
+fwd_p9 = plyr::ldply(fwd_9, rbind)[,-(2:13)]
+
+# step 10, add insurancetype, log_length_of_stay ~ age + evisit + 
+# respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + cindex + temperature_cat + 
+# is30dayreadmit + insurancetype + predictor
+fwd_10 = 
+  sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + 
+                                         respirationrate_transformed + 
+                                         heartrate_transformed + 
+                                         mean_arterial_pressure + 
+                                         cindex + temperature_cat + is30dayreadmit + insurancetype + x))$p.value) 
+fwd_p10 = plyr::ldply(fwd_10, rbind)[,-(2:15)]
+
+# step 11, add maritalstatus, log_length_of_stay ~ age + evisit + 
+# respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + cindex + temperature_cat + 
+# is30dayreadmit + insurancetype + maritalstatus + predictor
+fwd_11 = 
+  sapply(data_fwd, function(x) tidy(lm(log_length_of_stay ~ age + evisit + 
+                                         respirationrate_transformed + 
+                                         heartrate_transformed + 
+                                         mean_arterial_pressure + 
+                                         cindex + temperature_cat + is30dayreadmit + insurancetype + 
+                                         maritalstatus + x))$p.value) 
+fwd_p11 = plyr::ldply(fwd_11, rbind)[,-(2:16)]
+
+#################### Results ####################
+
+# model: life_exp ~ murder + hs_grad + log_population + frost
+fwd_fit = lm(log_length_of_stay ~ age + evisit + 
+               respirationrate_transformed + heartrate_transformed + mean_arterial_pressure + cindex + temperature_cat + 
+               is30dayreadmit + insurancetype + maritalstatus)
+summary(fwd_fit)
+detach(data_fwd)
+```
+
+### Stepwise Regression
+
+
+### Criterion-Based Procedures
+
+```{r criterion,eval=FALSE}
+# load the data
+hos = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+str(hos)
+
+# input models
+attach(hos)
+model_bw <- lm(log_length_of_stay ~ is30dayreadmit + evisit + age 
+               + gender + maritalstatus + insurancetype + heartrate_transformed
+               + respirationrate_transformed+mean_arterial_pressure)
+model_fw_new <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat  + maritalstatus 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_sw_0.05 <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_sw_0.10 <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + gender + maritalstatus + temperature_cat 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+AIC(model_bw, model_fw_new, model_sw_0.05, model_sw_0.10)
+
+criterion_bw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
+               + gender + maritalstatus + insurancetype + heartrate_transformed
+               + respirationrate_transformed+mean_arterial_pressure, data = hos,
+               nvmax= 15, nbest = 1)
+criterion_fw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
+               + heartrate_transformed + respirationrate_transformed 
+               + mean_arterial_pressure + insurancetype + race, data = hos, nvmax= 15
+               , nbest = 1)
+criterion_fw_new <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat  + maritalstatus 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
+criterion_sw_0.05 <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
+criterion_sw_0.10 <- regsubsets(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + gender + maritalstatus + temperature_cat 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure, data = hos, nvmax= 15, nbest = 1)
+
+# make plots to show the value of criterion
+criterion_plot <- function(criterion, data, method){
+  
+  res_cri <- summary(criterion)
+  par(mfrow=c(2,2))
+  plot(1:dim(res_cri$which)[1], res_cri$cp, pch=16, xlab="No of parameters", ylab="Cp Statistic")
+  abline(0,1)
+  plot(1:dim(res_cri$which)[1], res_cri$adjr2, pch=16, xlab="No of parameters", ylab="Adj R2")
+  plot(1:dim(res_cri$which)[1], res_cri$rss, pch=16, xlab="No of parameters", ylab="rss")
+  plot(1:dim(res_cri$which)[1], res_cri$bic, pch=16, xlab="No of parameters", ylab="BIC")
+}
+
+criterion_plot(criterion_bw, data= hos, method = "backward eliminaton") 
+criterion_plot(criterion_fw, data= hos, method = "forward eliminaton" )
+criterion_plot(criterion_sw_0.10, data= hos, method = "stepwise 0.10" ) 
+criterion_plot(criterion_sw_0.05, data= hos, method = "stepwise 0.05")
+criterion_plot(criterion_fw_new, data= hos, method = "forward elimination by hand")
+ 
+# make table to show the value of criterion
+best <- function(criterion) {
+  
+  subsets <- with(summary(criterion), cbind(p = as.numeric(rownames(which)),
+                                            which, rss, rsq, adjr2, cp, bic))
+  return(round(subsets,4))%>% as.tibble()
+}  
+
+best(criterion_bw)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_fw)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_sw_0.05)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_sw_0.10)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+best(criterion_fw_new)%>% 
+  select(p, rss, rsq, adjr2, cp, bic, everything())%>%
+  knitr::kable()
+
+criterion_result <- full_join(best(criterion_bw), best(criterion_fw))%>%
+  full_join(., best(criterion_sw_0.05))%>%
+  full_join(., best(criterion_sw_0.10))%>%
+  full_join(.,best(criterion_fw_new))%>%
+  select(p, rss, rsq, adjr2, cp, bic, everything())
+
+# ANOVA for comparing nested model
+anova(model_bw, model_sw_0.10)
+anova(model_fw_new, model_sw_0.10)
+anova(model_sw_0.05, model_sw_0.10)
+anova(model_fw_new, model_sw_0.05)
+
+model_base <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_gender <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + gender + 
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_marritalstat <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + maritalstatus +
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_both <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + gender + maritalstatus +
+                    + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+model_both_int <- lm(log_length_of_stay ~ is30dayreadmit + cindex 
+                    + evisit + age + temperature_cat + gender + maritalstatus 
+                    + gender * maritalstatus  + insurancetype + heartrate_transformed 
+                    + respirationrate_transformed 
+                    + mean_arterial_pressure)
+summary(model_both_int)
+anova(model_base, model_gender)
+anova(model_base, model_marritalstat)
+anova(model_base, model_both)
+anova(model_base, model_both_int)
+
+par(mfrow = c(1, 2))
+
+# Residuals vs fitted values plot
+plot(fitted(model_sw_0.10), resid(model_sw_0.10), xlab = "Predicted/Fitted value", ylab = "Residual")
+title("(a) Residual Plot for log_length_of_stay ")
+abline(0, 0)
+
+# Quantile - Quantile plot (QQ-plot)
+qqnorm(resid(model_sw_0.10), xlab = "Expected Value", ylab = "Residual", main = "")
+qqline(resid(model_sw_0.10))
+title("(a) QQ Plot for log_length_of_stay")
+plot(model_sw_0.10)
+```
+
+### Model Building with SAS
+

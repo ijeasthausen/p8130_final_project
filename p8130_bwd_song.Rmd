@@ -23,7 +23,7 @@ data_bwd = read.csv("./data/cleaned_data_for_analyses.csv") %>%
 
 - start with all predictors in the model
 
-```{r bwd_full, message=FALSE, warning=FALSE, results = "hide"}
+```{r bwd_full, echo=FALSE, message=FALSE, warning=FALSE, results="hide"}
 # fit
 bwd_fit_full = lm(log_length_of_stay ~ ., data = data_bwd)
 arrange(tidy(bwd_fit_full), desc(p.value))
@@ -33,7 +33,7 @@ arrange(tidy(bwd_fit_full), desc(p.value))
 - refit the model and move on
 - stop when all p-values <= **alpha_crit (p-to-remove) = 0.05**.
 
-```{r bwd_back, message=FALSE, warning=FALSE, results = "hide"}
+```{r bwd_back, echo=FALSE, message=FALSE, warning=FALSE, results="hide"}
 # step 1: no race
 bwd_step1 = update(bwd_fit_full, . ~ . -race)
 arrange(tidy(bwd_step1), desc(p.value))
@@ -94,7 +94,9 @@ step_pvalue %>%
                caption = "P-values of Backward Elimination",
                booktabs = TRUE) %>% 
   kableExtra::kable_styling(latex_options = "scale_down")
+```
 
+```{r bwd_summary, eval=FALSE, include=FALSE}
 # summary of model from backward elimination
 bwd_step8 %>% summary() 
 ```
