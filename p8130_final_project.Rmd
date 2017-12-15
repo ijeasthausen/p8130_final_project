@@ -2,7 +2,7 @@
 title: "p8130 Final Project"
 author: "Imaani Easthausen, Shanshan Song, Huijuan Zhang, Xinyan Zheng"
 date: "December 9, 2017"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -33,9 +33,9 @@ The below categorical and ordinal variables were reclassified in order to combin
  * Marital Status: "Married" and Civil Union" were reclassified as "partnered," all other categories were reclassified as "not partnered."
 
 ##Preliminary Analyses
-
+![a) and b)](transform_fig/Slide1.jpg)  
 A histogram of LOS was visually inspected and substantial skewness was observed. Log transformation successfully rendered LOS approximatley normal (figure XXX). Bivariate relationships between continuous predictors and length of stay were examined by visual inspection of scatter plots. Oxygen saturation, temperature, heart rate, and respiration rate appeared to have non-linear relationships with LOS. As such, respiration rate and heart rate were transformed using the below transformation equation:
-$$t = \frac{1}{x^2}$$
+$$T(X) = \frac{1}{X^2}$$
 Oxygen saturation and temperature were re-classified into categorical variables as below: 
 
 * Oxygen saturation: saturations below 95% were defined as "low" and saturations from 95-100% were defined as "normal."
@@ -55,7 +55,7 @@ hist_outcome_not_transformed = hospital_data_cleaned %>%
 hist_outcome_transformed = hospital_data_cleaned %>%
   ggplot(aes(x = log_length_of_stay)) +
   geom_histogram() +
-  labs(title = "LOS with Log Transformation", x = "Length of Stay (log(days))")
+  labs(x = "Length of Stay (log(days))")
 
 
 continuous_predictors_no_transformations = hospital_data_cleaned %>%
@@ -85,9 +85,12 @@ Variable selection was conducted using backward, forwards, and stepwise methods.
 
 Variables selected by all methods include: 30 day readmit, number of ER visits in last six months, age, insurance type, heart rate, respiration rate, and mean arterial pressure. Additional variables selected using forward selection include: c-index, temperature, and partner status. Additional variables selected using backward selection include: gender and partner status. Additional varaibles choosen by stepwise selection include: c-index, temperature, and heart rate. The models selected by the forward and stepwise processes performed better that the model selected by the backwards variable selection process based on model diagnotic criteria including residual sum of squares, adjusted R-squared, BIC, and AIC (table XXX). Diagnostic criteria for models selected in the forward and stepwise processes were similar to one another (table XXX). Since the model selected in the stepwise process was a subset of the model selected in the forward process with only one less variable (marital status), we conducted an ANOVA test to compare nested models. Based on the results of the ANOVA test, we concluded that the addition of marital status significantly improved the predictive capability of the model (F = 4.4441; p = 0.035). 
 
-The model selected via this process (model 1) included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, temperature, partner status, insurance type, heart rate, respiration rate, and mean arterial pressure. Model 1 residuals were heavy-tailed (figure XXX) with substantial kurtosis (6.5). Therefore, we conlcude that this model violates the assumption of residual normality and may have limited predictive power. 
 
-In order to improve residual normality, observations with outlier residual values (> 2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. Models selected using the stepwise and backward processes were the same and included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables selected in the forward process include: ICU admission, religion, and oxygen saturation. All models performed similarly by diagnostic criteria (table XXX). The additional variables selected in the forward process significantly improved the model by ANOVA testing (F = 3.9807; p < 0.001). Model assuptions were asssesed by visual inspection of the appropriate plots. Residuals associated model selected by this process (model 2) were approximately normal (figure XXX), uncorrelated with the fitted  
+In order to improve residual normality, observations with outlier residual values (> 2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. Models selected using the stepwise and backward processes were the same and included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables selected in the forward process include: ICU admission, religion, and oxygen saturation. All models performed similarly by diagnostic criteria (table XXX). The additional variables selected in the forward process significantly improved the model by ANOVA testing (F = 3.9807; p < 0.001). Assumptions for this model (Model 2) were asssesed by visual inspection of the appropriate plots; residuals associated with model 2 were approximately normal, uncorrelated with the fitted outcome values, and no influential points were identified by Cook's Distance.  
+
+#Results
+We present the following model to predict length of hospital stay:
+$$Y_i = 2.80 + 0.18X_{i1} + 0.18X_{i2} + 0.14X_{i1}
 
 
 
