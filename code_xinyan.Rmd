@@ -267,7 +267,10 @@ summary(model_sw_0.10)
 
 #Result interpretation
 
-Innitially, we get model (blablabla). Because this model violates the normalize assumption of the residual, we decided to remove outliers and refit another model. Compare the two, the new model loses the variable named "is30dayreadmit" and have a new variable "BMI". Overall, the adjusted R-squared increases by 15.5% and residual standard error decreased by 10.9%. For the covariates that are the same in both models, the predictor "insurancetypeMedicare" becames insignificant and the predictor "genderMale" becames significant. And coefficients of the predictors changed, especially for predictor "temperature_catlow" changes from -0.09679 to -0.05544. But for direction, all the predictors are stay the same. 
+Initially, we get model (blablabla). Because this model violates the normalize assumption of the residual, we decided to remove outliers and refit another model. Compare the new model and the previous one, the new model loses the variable "is30dayreadmit" and have a new one "BMI". Overall, the adjusted R-squared increases by 15.5% and residual standard error decreased by 10.9%. For the covariates that stay in both models, the predictor "insurancetypeMedicare" became insignificant and the predictor "genderMale" became significant. And coefficients of the predictors changed, especially for predictor "temperature_catlow", which changed from -0.09679 to -0.05544. As for direction, all the predictors are consistent before and after.
+
+
+# interpretaion about bootstrap
 
 
 
