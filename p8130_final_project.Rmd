@@ -21,7 +21,7 @@ data_no_outliers = read_csv("data/data_no_outliers.csv")
 We present a linear regression model for the prediction of hospital length of stay. The model has good internal validity and explains approximately 17.5% of the variation in hospital length of stay.
 
 # Introduction
-In an era of rising healthcare expenses, one of the major drivers of the costs in an inpatient care setting is the length of hospital stay. A better understanding of the characteristics driving length of hospital stay will be needed in order  identify patients at risk for long hospital stays and implement strategies designed to help these patients leave the hospital earlier. 
+In an era of rising healthcare expenses, one of the major drivers of the costs in an inpatient care setting is the length of hospital stay. A better understanding of the characteristics driving length of hospital stay will be needed in order identify patients at risk for long hospital stays and implement strategies designed to help these patients leave the hospital earlier. 
 
 In order to better understand characteristics associated with increased length of stay, we develop a linear regrestion model to predict length of stay. A dataset containing 3612 are used to fit the model. The following covariates are considered for inclusion: age, gender, race, religion, marital status, insurance type, vital status, severity of comobidity (measured using Charlson comorbidity index), number of visits to the ER in the prior six months, whether the patient as admitted to the ICU. Descriptive statistics for all continuous covariates considered for inclusion are presented in table 1. 
 
@@ -30,7 +30,7 @@ In order to better understand characteristics associated with increased length o
 
 #Methods
 ##Data Cleaning
-Data cleaning and analyses were conducted in R and SAS. For subjecta with more than one hospitalization, only the first hospitalization was included in analyses. Subjects that were missing any of the following data were excluded: patient ID, visit ID, length of stay, hospital admission witin the last 30 days, MEW score, C index, number of admissions in 6 months prior, age, gender, race, religion, marital status, insurance type.
+Data cleaning and analyses were conducted in R and SAS. For subjects with more than one hospitalization, only the first hospitalization was included in analyses. Subjects that were missing any of the following data were excluded: patient ID, visit ID, length of stay, hospital admission witin the last 30 days, MEW score, C index, number of admissions in 6 months prior, age, gender, race, religion, marital status, insurance type.
 
 Due to the high degree of anticipated collinearity between systolic and diastolic blood pressure, mean arterial pressure was calculated from these two variables and used in all subsequent model fitting analyses.  
 
@@ -71,18 +71,20 @@ hospital_data_cleaned %>%
 ##Variable Selection and Model Building
 Variable selection was conducted using backward, forwards, and stepwise methods. Effect significance level of $alpha$ = 0.05 was required for a variable to stay in or enter the model for all variable selection processes. 
 
+![](/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/transform_fig/diagnostics_tables_criterion.jpg)
+*Table 3*: Diagnostic criteria for models with and without outlier data.
+
 Variables selected by all methods include: 30 day readmit, number of ER visits in last six months, age, insurance type, heart rate, respiration rate, and mean arterial pressure. Additional variables selected using forward selection include: c-index, temperature, and partner status. Additional variables selected using backward selection include: gender and partner status. Additional varaibles choosen by stepwise selection include: c-index, temperature, and heart rate. The models selected by the forward and stepwise processes performed better that the model selected by the backwards variable selection process based on model diagnotic criteria including residual sum of squares, adjusted R-squared, BIC, and AIC (table 3). Diagnostic criteria for models selected in the forward and stepwise processes were similar to one another (table 3). Since the model selected in the stepwise process was a subset of the model selected in the forward process with only one less variable (marital status), we conducted an ANOVA test to compare nested models. Based on the results of the ANOVA test, we concluded that the addition of marital status significantly improved the predictive capability of the model (F = 4.4441; p = 0.035). 
 
 
 In order to improve residual normality, observations with outlier residual values (> 2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. Models selected using the stepwise and backward processes were the same and included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables selected in the forward process include: ICU admission, religion, and oxygen saturation. All models performed similarly by diagnostic criteria (table 3). The additional variables selected in the forward process significantly improved the model by ANOVA testing (F = 3.9807; p < 0.001). Assumptions for this model (Model 2) were asssesed by visual inspection of the appropriate plots; residuals associated with model 2 were approximately normal, uncorrelated with the fitted outcome values, and no influential points were identified by Cook's Distance.  
 
-![](/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/transform_fig/diagnostics_tables_criterion.jpg)
-*Table 3*: Diagnostic criteria for models with and without outlier data.
-
-
+![figure 2](/Users/ImaaniEasthausen/Documents/Biostats MS/Biostat Met/p8130_final_project/transform_fig/qq/Slide1.jpg)
 
 #Results
 In table 4, we present a prediction model for length of stay. The model explains 17.5% of the variability in length of stay. Bootstrapping was used to assess interal validity, and good internal validity was observed. 
+
+Because model 1 violates the normal assumptions on the residuals, we decided to remove outliers and refit another model. Overall, the adjusted R-squared increases from  ~14% in model 1 to ~17.5% in model 2. Model 2 selects additional covariates when compared with model 1. Further, coefficients of the predictors changed, especially for predictor "temperature_catlow", which changed from -0.09679 to -0.05544. As for direction, all the predictors are consistent before and after.
 
 ```{r echo=FALSE}
 forward_subset2 = lm(log_length_of_stay ~ is30dayreadmit + cindex + evisit + icu_flag + age + gender + religion +  maritalstatus + insurancetype + bmi + o2sat_cat + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = data_no_outliers)
