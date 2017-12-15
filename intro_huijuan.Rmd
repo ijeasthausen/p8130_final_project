@@ -2,7 +2,7 @@
 title: "Introduction"
 author: "Huijuan Zhang"
 date: "12/14/2017"
-output: html_document
+output: pdf_document
 ---
 
 ### Introduction
@@ -10,3 +10,24 @@ output: html_document
 Linear regression models are widely used today in business, government, healthcare and many other fields for prediction, especially in this era of big data. Here we are trying to find a way to improve the overall hospital management and minimizing the cost/resources associated with patients’ care. The data we got with permission is a total of 3682 records from 3612 patients collected in the 2016 calendar year. Only visits within 24 hours of hospital admission and for patients older than 17 years were considered relevant for this analysis.
 
 Here, we aim to figure out a linear model with predictors from variables in this dataset, applying statistical strategies. Patient’s length of stay (LoS) is chosen to be the outcome as it is mostly related to the cost/resources we are looking at. Main predictors are patient’s age, gender, insurance type, some vital signs, etc. A detailed descriptive statistics for all variables of interest are shown below. (Table XXX)
+
+### Diagnostics Table
+
+```{r}
+library(tidyverse)
+
+diag_no_outlier = list(
+  Rss = c(1425, 1425, 1417),
+  Cp = c(0.173, 0.173, 0.175),
+  AIC = c(1013, 1013, 1013),
+  BIC = c(-1693, -1693, -1693)
+)
+as.data.frame(diag_no_outlier)
+
+# table for bootstrapping results
+broom::tidy(as.data.frame(diag_no_outlier)) %>% 
+  knitr::kable(format = "latex", 
+               caption = "Diagnostics",
+               booktabs = TRUE) %>% 
+  kableExtra::kable_styling(latex_options = "scale_down")
+```
