@@ -12,6 +12,9 @@ library(tidyverse)
 library(janitor)
 library(readxl)
 library(stringr)
+library(moments)
+library(graphics)
+library(MASS)
 ```
 
 ```{r}
@@ -109,12 +112,70 @@ hospital_data_cleaned %>%
 ```
 
 
+```{r}
+#fit model based on variable selection process
+forward_subset = lm(log_length_of_stay ~ is30dayreadmit + cindex + evisit + age + temperature_cat + maritalstatus + insurancetype +  heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = hospital_data_cleaned)
+
+stepwise_subset = lm(log_length_of_stay ~ is30dayreadmit + cindex + evisit + age + temperature_cat + insurancetype +  heartrate_transformed + respirationrate_transformed + mean_arterial_pressure , data = hospital_data_cleaned)
+
+anova(stepwise_subset, forward_subset)
+
+plot(forward_subset)
+
+rstandard(forward_subset) %>%
+  kurtosis()
+
+rstandard(forward_subset) %>%
+  skewness()
+
+residuals = rstandard(forward_subset) 
+outlier = residuals[abs(residuals) > 2.5]
+
+hospital_data_cleaned_w_residuals = cbind(hospital_data_cleaned, residuals) %>%
+  as.tibble()
+
+is.outlier = function(value, vector){
+  value %in% outlier
+}
+
+data_no_outliers = hospital_data_cleaned_w_residuals %>%
+  mutate(outlier = is.outlier(residuals, outlier))%>%
+  filter(outlier == FALSE)
+
+forward_subset2 = lm(log_length_of_stay ~ cindex + evisit + icu_flag + age + gender + religion +  maritalstatus + insurancetype + bmi + o2sat_cat + temperature_transformed + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = data_no_outliers)
+
+
+
+
+what_do_outliers_look_like = hospital_data_cleaned_w_residuals %>%
+  mutate(outlier = is.outlier(residuals, outlier))%>%
+  filter(outlier == TRUE)
+
+what_do_outliers_look_like %>% write.csv(file = "./data/outlier_patients.csv")
+
+
+
+
+data_no_outliers %>% write.csv(file = "./data/data_no_outliers.csv")
+
+
+best_subset_no_outliers = lm(log_length_of_stay ~ is30dayreadmit + cindex + evisit + age + gender +
+                 maritalstatus + temperature_cat  + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = data_no_outliers )
+
+summary(best_subset_no_outliers)
+
+plot(best_subset_no_outliers)
+
+skewness(rstandard(best_subset_no_outliers))
+kurtosis(rstandard(best_subset_no_outliers))
 
 
 
 
 
 
+
+```
 
 
 

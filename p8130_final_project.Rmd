@@ -79,3 +79,25 @@ hospital_data_cleaned %>%
   cor() %>%
   kable()
 ```
+
+##Variable Selection and Model Building
+Variable selection was conducted using backward, forwards, and stepwise methods. Effect significance level of $alpha$ = 0.05 was required for a variable to stay in or enter the model for all variable selection processes. 
+
+Variables selected by all methods include: 30 day readmit, number of ER visits in last six months, age, insurance type, heart rate, respiration rate, and mean arterial pressure. Additional variables selected using forward selection include: c-index, temperature, and partner status. Additional variables selected using backward selection include: gender and partner status. Additional varaibles choosen by stepwise selection include: c-index, temperature, and heart rate. The models selected by the forward and stepwise processes performed better that the model selected by the backwards variable selection process based on model diagnotic criteria including residual sum of squares, adjusted R-squared, BIC, and AIC (table XXX). Diagnostic criteria for models selected in the forward and stepwise processes were similar to one another (table XXX). Since the model selected in the stepwise process was a subset of the model selected in the forward process with only one less variable (marital status), we conducted an ANOVA test to compare nested models. Based on the results of the ANOVA test, we concluded that the addition of marital status significantly improved the predictive capability of the model (F = 4.4441; p = 0.035). 
+
+The model selected via this process (model 1) included the following variables: 30 day readmit, c-index, number of ER visits in last six months, age, temperature, partner status, insurance type, heart rate, respiration rate, and mean arterial pressure. Model 1 residuals were heavy-tailed (figure XXX) with substantial kurtosis (6.5). Therefore, we conlcude that this model violates the assumption of residual normality and may have limited predictive power. 
+
+In order to improve residual normality, observations with outlier residual values (>2.5 after standardization) were removed from the data, and the model was re-fit using the process described above. After outliers were removed from the data, backward, forwards, and stepwise variable processes all chose the following variables for inclusion in the model: c-index, number of ER visits in last six months, age, gender, marital status, insurance type, BMI, temperature, heart rate, respiration rate, and mean arterial pressure. Additional variables chosen by the forward selection process include: 30 day readmit, ICU, and religion. The backward process also included 30 day readmit, and the stepwise process did not select any additional variables. All three models performed similarly in model diagnostic criteria (table XXX). An ANOVA test to compare nested models was used to make all pairwise comparisons between candidate models. 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
