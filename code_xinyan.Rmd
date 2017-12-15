@@ -13,9 +13,17 @@ library(leaps)
 hos = read.csv("./data/cleaned_data_for_analyses.csv") %>% 
   select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
   mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
-str(hos)
+
+hos_no_outlier = read.csv("./data/data_no_outliers.csv") %>% 
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
+
+hos_outlier = read.csv("./data/outlier_patients.csv")%>%
+  select(-X, -postalcode,-facilityname,-facilityzip, -patientid, -visitid, -date) %>% 
+  mutate(is30dayreadmit = as.factor(is30dayreadmit), icu_flag = as.factor(icu_flag))
 
 ```
+
 
 ```{r}
 
@@ -44,6 +52,7 @@ AIC(model_bw, model_fw_new, model_sw_0.05, model_sw_0.10)
 
 
 
+##########this is the main function#######
 
 criterion_bw <- regsubsets(log_length_of_stay ~ is30dayreadmit + evisit + age 
                + gender + maritalstatus + insurancetype + heartrate_transformed
@@ -210,23 +219,64 @@ summary(bwd_step5)
 ```
 
 #generating the statistics
+
 ```{r}
 statistics <-  function(x) {
   average <- mean(x)
   median <- median(x)
   sd <- sd(x)
-  quantile_1st <- quantile(x,probs= 0.25)
-  quantile_3nd <- quantile(x,probs= 0.75)
+  quantile_1st <- quantile(x,probs = 0.25)
+  quantile_3nd <- quantile(x,probs = 0.75)
   minimum <- min(x)
   maximum <- max(x)
   result <- data_frame(average,median,sd,quantile_1st,quantile_3nd , minimum,maximum)
   return(result)
 }
-colnames(hos)
 
 hos%>%
+  select(log_length_of_stay, evisit,  age, bmi, heartrate_transformed, respirationrate_transformed, mean_arterial_pressure ) %>%
+  map(.,statistics)
+
+hos_no_outlier%>%
   select(log_length_of_stay, evisit,  age, bmi, heartrate_transformed, respirationrate_transformed, mean_arterial_pressure )%>%
   map(.,statistics)
 
+hos_no_outlier%>%
+  select(log_length_of_stay, evisit,  age, bmi, heartrate_transformed, respirationrate_transformed, mean_arterial_pressure )%>%
+  map(.,statistics)
+
+hos%>%
+  select(-log_length_of_stay, -evisit,  -age, -bmi, -heartrate_transformed, -respirationrate_transformed, -mean_arterial_pressure)%>%
+  summary(.)
+
+hos_no_outlier%>%
+  select(-log_length_of_stay, -evisit,  -age, -bmi, -heartrate_transformed, -respirationrate_transformed, -mean_arterial_pressure)%>%
+  summary(.)
+
+hos_outlier%>%
+  select(-log_length_of_stay, -evisit,  -age, -bmi, -heartrate_transformed, -respirationrate_transformed, -mean_arterial_pressure)%>%
+  summary(.)
+
 ```
+
+```{r}
+setwise_subset2 = lm(log_length_of_stay ~ cindex + evisit + age + gender +  maritalstatus + insurancetype + bmi  + temperature_cat + heartrate_transformed + respirationrate_transformed + mean_arterial_pressure, data = hos_no_outlier)
+summary(setwise_subset2)
+summary(model_sw_0.10)
+```
+
+#Result interpretation
+
+Innitially, we get model (blablabla). Because this model violates the normalize assumption of the residual, we decided to remove outliers and refit another model. Compare the two, the new model loses the variable named "is30dayreadmit" and have a new variable "BMI". Overall, the adjusted R-squared increases by 15.5% and residual standard error decreased by 10.9%. For the covariates that are the same in both models, the predictor "insurancetypeMedicare" becames insignificant and the predictor "genderMale" becames significant. And coefficients of the predictors changed, especially for predictor "temperature_catlow" changes from -0.09679 to -0.05544. But for direction, all the predictors are stay the same. 
+
+
+
+
+
+
+
+
+
+
+
 
