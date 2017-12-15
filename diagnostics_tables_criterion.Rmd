@@ -2,7 +2,7 @@
 title: "model_selection_summary_table"
 author: "Imaani Easthausen, Shanshan Song, Huijuan Zhang, Xinyan Zheng"
 date: "December 9, 2017"
-output: pdf_document
+output: html_document
 fontsize: 11pt 
 geometry: margin=1in
 ---
